@@ -1,0 +1,150 @@
+/* ==========================================
+   Frankfurt AutoTrade Admin Panel
+   Version 1.0
+========================================== */
+
+/* ---------- RESET ---------- */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:'Montserrat',sans-serif;
+
+    background:#F5F7FA;
+
+    color:#2D3748;
+
+}
+
+/* ---------- COLORS ---------- */
+
+:root{
+
+    --primary:#C8A85A;
+
+    --primary-dark:#A8873F;
+
+    --white:#FFFFFF;
+
+    --background:#F5F7FA;
+
+    --sidebar:#1F2937;
+
+    --sidebar-hover:#374151;
+
+    --text:#374151;
+
+    --heading:#111827;
+
+    --border:#E5E7EB;
+
+    --success:#16A34A;
+
+    --danger:#DC2626;
+
+    --warning:#D97706;
+
+}
+
+/* ---------- MAIN LAYOUT ---------- */
+
+.admin-layout{
+
+    display:flex;
+
+    min-height:100vh;
+
+}
+
+.main-content{
+
+    flex:1;
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+.page-content{
+
+    padding:40px;
+
+}
+
+/* ---------- SIDEBAR ---------- */
+
+.sidebar{
+
+    width:260px;
+
+    background:var(--sidebar);
+
+    color:white;
+
+    min-height:100vh;
+
+}
+
+.sidebar-header{
+
+    padding:30px;
+
+    font-size:28px;
+
+    font-weight:800;
+
+}
+
+.sidebar-header span{
+
+    color:var(--primary);
+
+}
+
+.sidebar-menu{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+.sidebar-menu a{
+
+    color:white;
+
+    text-decoration:none;
+
+    padding:18px 30px;
+
+    transition:.25s;
+
+    font-weight:600;
+
+}
+
+.sidebar-menu a:hover{
+
+    background:var(--sidebar-hover);
+
+    color:var(--primary);
+
+}
+
+.admin-name{
+
+    font-weight:600;
+
+    color:var(--text);
+
+}
