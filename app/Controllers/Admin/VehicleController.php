@@ -22,6 +22,7 @@ class VehicleController extends Controller
         $vehicles = $vehicle->all();
 
         $this->view('admin/vehicles/index', [
+            'title'    => 'Vehicles',
             'vehicles' => $vehicles
         ]);
     }
@@ -35,7 +36,9 @@ class VehicleController extends Controller
             exit;
         }
 
-        $this->view('admin/vehicles/create');
+        $this->view('admin/vehicles/create', [
+            'title' => 'Add Vehicle'
+        ]);
     }
 
     public function store(): void

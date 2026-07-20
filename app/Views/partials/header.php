@@ -10,9 +10,9 @@
             Administrator
         </span>
 
-        <a href="/logout" class="logout-btn">
-            Logout
-        </a>
+<a href="/admin/logout" class="logout-btn">
+    Logout
+</a>
 
     </div>
 

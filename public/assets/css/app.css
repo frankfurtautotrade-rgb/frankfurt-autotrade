@@ -172,3 +172,74 @@ body {
     padding: 25px;
     box-shadow: 0 3px 10px rgba(0,0,0,.08);
 }
+
+/* ==========================================
+   VEHICLE PAGE
+========================================== */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    font-size: 30px;
+    margin-bottom: 6px;
+}
+
+.page-header p {
+    color: #777;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: .25s;
+}
+
+.btn-primary {
+    background: #c8a85a;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #b89543;
+}
+
+/* ==========================================
+   TABLE
+========================================== */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+.table thead {
+    background: #1d1f23;
+    color: white;
+}
+
+.table th,
+.table td {
+    padding: 16px 18px;
+    text-align: left;
+    border-bottom: 1px solid #ececec;
+}
+
+.table tbody tr:hover {
+    background: #f8f8f8;
+}
+
+.table td:last-child {
+    white-space: nowrap;
+}

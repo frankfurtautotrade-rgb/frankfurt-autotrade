@@ -1,48 +1,78 @@
-<h2>Vehicles</h2>
+<div class="page-header">
 
-<p>
-    <a href="/admin/vehicles/create">+ Add Vehicle</a>
-</p>
+    <div>
+        <h2>Vehicles</h2>
+        <p>Manage your vehicle inventory.</p>
+    </div>
 
-<table border="1" cellpadding="10" cellspacing="0">
+    <a href="/admin/vehicles/create" class="btn btn-primary">
+        + Add Vehicle
+    </a>
 
-    <tr>
-        <th>Stock No.</th>
-        <th>Make</th>
-        <th>Model</th>
-        <th>Year</th>
-        <th>Mileage</th>
-        <th>Price</th>
-    </tr>
+</div>
 
-    <?php foreach ($vehicles as $vehicle): ?>
+<table class="table">
 
-    <tr>
-        <td>
-            <?= htmlspecialchars($vehicle['stock_number'] ?? '-'); ?>
-        </td>
+    <thead>
 
-        <td>
-            <?= htmlspecialchars($vehicle['make']); ?>
-        </td>
+        <tr>
 
-        <td>
-            <?= htmlspecialchars($vehicle['model']); ?>
-        </td>
+            <th>Stock No.</th>
+            <th>Make</th>
+            <th>Model</th>
+            <th>Year</th>
+            <th>Mileage</th>
+            <th>Price</th>
+            <th>Actions</th>
 
-        <td>
-            <?= $vehicle['year']; ?>
-        </td>
+        </tr>
 
-        <td>
-            <?= number_format($vehicle['mileage']); ?> km
-        </td>
+    </thead>
 
-        <td>
-            €<?= number_format($vehicle['price'], 2); ?>
-        </td>
-    </tr>
+    <tbody>
 
-    <?php endforeach; ?>
+    <?php if (empty($vehicles)): ?>
+
+        <tr>
+
+            <td colspan="7" style="text-align:center;padding:30px;">
+                No vehicles found.
+            </td>
+
+        </tr>
+
+    <?php else: ?>
+
+        <?php foreach ($vehicles as $vehicle): ?>
+
+            <tr>
+
+                <td><?= htmlspecialchars($vehicle['stock_number'] ?? '-'); ?></td>
+
+                <td><?= htmlspecialchars($vehicle['make']); ?></td>
+
+                <td><?= htmlspecialchars($vehicle['model']); ?></td>
+
+                <td><?= (int)$vehicle['year']; ?></td>
+
+                <td><?= number_format((int)$vehicle['mileage']); ?> km</td>
+
+                <td>€<?= number_format((float)$vehicle['price'], 2); ?></td>
+
+                <td>
+
+                    <a href="#" class="btn btn-primary">
+                        Edit
+                    </a>
+
+                </td>
+
+            </tr>
+
+        <?php endforeach; ?>
+
+    <?php endif; ?>
+
+    </tbody>
 
 </table>
