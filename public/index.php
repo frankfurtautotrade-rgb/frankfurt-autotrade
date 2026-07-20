@@ -2,29 +2,71 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../bootstrap.php';
-
 use Core\Router;
 
+require_once __DIR__ . '/../bootstrap.php';
+
+/*
+|--------------------------------------------------------------------------
+| Create Router
+|--------------------------------------------------------------------------
+*/
+
 $router = new Router();
+
+/*
+|--------------------------------------------------------------------------
+| Load Routes
+|--------------------------------------------------------------------------
+*/
 
 require_once __DIR__ . '/../config/web.php';
 require_once __DIR__ . '/../config/admin.php';
 
+/*
+|--------------------------------------------------------------------------
+| Current Request
+|--------------------------------------------------------------------------
+*/
+
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
-$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$requestUri = parse_url(
+    $_SERVER['REQUEST_URI'],
+    PHP_URL_PATH
+) ?? '/';
 
-// Remove the project folder when running locally.
-// Change '/frankfurt-autotrade/public' if your project folder has a different name.
+/*
+|--------------------------------------------------------------------------
+| Base Path
+|--------------------------------------------------------------------------
+|
+| Example:
+| http://localhost/frankfurt-autotrade/public/login
+|
+| Set:
+| $basePath = '/frankfurt-autotrade/public';
+|
+| Production:
+| $basePath = '';
+|
+*/
+
 $basePath = '';
 
-if (str_starts_with($requestUri, $basePath)) {
+if ($basePath !== '' && str_starts_with($requestUri, $basePath)) {
     $requestUri = substr($requestUri, strlen($basePath));
 }
 
-if ($requestUri === '') {
-    $requestUri = '/';
-}
+$requestUri = $requestUri === '' ? '/' : $requestUri;
 
-$router->dispatch($requestMethod, $requestUri);
+/*
+|--------------------------------------------------------------------------
+| Dispatch Request
+|--------------------------------------------------------------------------
+*/
+
+$router->dispatch(
+    $requestMethod,
+    $requestUri
+);

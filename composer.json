@@ -1,0 +1,15 @@
+{
+    "name": "frankfurt-autotrade/dms",
+    "description": "Frankfurt AutoTrade Dealer Management System",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Core\\": "core/"
+        }
+    }
+}

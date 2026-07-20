@@ -6,18 +6,32 @@ use Core\Response;
 
 class Router
 {
+    /**
+     * Registered routes
+     *
+     * @var array
+     */
     private array $routes = [];
 
+    /**
+     * Register GET route
+     */
     public function get(string $uri, string $controller, string $method): void
     {
         $this->addRoute('GET', $uri, $controller, $method);
     }
 
+    /**
+     * Register POST route
+     */
     public function post(string $uri, string $controller, string $method): void
     {
         $this->addRoute('POST', $uri, $controller, $method);
     }
 
+    /**
+     * Store route
+     */
     private function addRoute(
         string $requestMethod,
         string $uri,
@@ -25,51 +39,76 @@ class Router
         string $method
     ): void {
         $this->routes[] = [
-            'requestMethod' => $requestMethod,
-            'uri'           => $uri,
+            'requestMethod' => strtoupper($requestMethod),
+            'uri'           => $this->normalize($uri),
             'controller'    => $controller,
             'method'        => $method,
         ];
     }
 
+    /**
+     * Return all routes
+     */
     public function routes(): array
     {
         return $this->routes;
     }
 
-public function dispatch(string $requestMethod, string $requestUri): void
-{
-    foreach ($this->routes as $route) {
+    /**
+     * Dispatch current request
+     */
+    public function dispatch(string $requestMethod, string $requestUri): void
+    {
+        $requestMethod = strtoupper($requestMethod);
+        $requestUri    = $this->normalize($requestUri);
 
-        if ($route['requestMethod'] !== $requestMethod) {
-    continue;
-}
+        foreach ($this->routes as $route) {
 
-$pattern = preg_replace(
-    '/\{[a-zA-Z_]+\}/',
-    '([^/]+)',
-    $route['uri']
-);
+            if ($route['requestMethod'] !== $requestMethod) {
+                continue;
+            }
 
-$pattern = '#^' . $pattern . '$#';
+            $pattern = preg_replace(
+                '/\{[a-zA-Z_]+\}/',
+                '([^/]+)',
+                $route['uri']
+            );
 
-if (!preg_match($pattern, $requestUri, $matches)) {
-    continue;
-}
+            $pattern = '#^' . $pattern . '$#';
 
-array_shift($matches);
+            if (!preg_match($pattern, $requestUri, $matches)) {
+                continue;
+            }
+
+            array_shift($matches);
 
             $controller = new $route['controller'];
 
             $method = $route['method'];
 
+            if (!method_exists($controller, $method)) {
+                throw new \Exception(
+                    "Method {$method} not found in controller " . get_class($controller)
+                );
+            }
+
             $controller->$method(...$matches);
 
             return;
+        }
+
+        Response::notFound();
     }
 
-Response::notFound();
+    /**
+     * Normalize URI
+     */
+    private function normalize(string $uri): string
+    {
+        $uri = parse_url($uri, PHP_URL_PATH);
 
-}
+        $uri = rtrim($uri, '/');
 
+        return $uri === '' ? '/' : $uri;
+    }
 }
