@@ -1,27 +1,17 @@
 <?php
 
-declare(strict_types=1);
+return [
 
-/*
-|--------------------------------------------------------------------------
-| Database Configuration
-|--------------------------------------------------------------------------
-*/
+    'host' => '127.0.0.1',
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'frankfurt_autotrade');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+    'port' => 3306,
 
-/*
-|--------------------------------------------------------------------------
-| PDO Connection String
-|--------------------------------------------------------------------------
-*/
+    'database' => 'frankfurt_autotrade',
 
-define(
-    'DB_DSN',
-    'mysql:host=' . DB_HOST .
-    ';dbname=' . DB_NAME .
-    ';charset=utf8mb4'
-);
+    'username' => 'root',
+
+    'password' => '',
+
+    'charset' => 'utf8mb4',
+
+];

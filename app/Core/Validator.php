@@ -2,28 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 final class Validator
 {
-    private array $data;
+    /**
+     * Validation errors.
+     */
     private array $errors = [];
 
-    public function __construct(array $data)
-    {
-        $this->data = $data;
-    }
-
     /**
-     * Validate according to the supplied rules.
+     * Validate data against rules.
      */
-    public function validate(array $rules): bool
+    public function validate(array $data, array $rules): bool
     {
-        foreach ($rules as $field => $fieldRules) {
+        $this->errors = [];
 
-            $value = trim((string)($this->data[$field] ?? ''));
+        foreach ($rules as $field => $ruleString) {
 
-            foreach ($fieldRules as $rule) {
+            $rulesArray = explode('|', $ruleString);
+
+            $value = trim((string)($data[$field] ?? ''));
+
+            foreach ($rulesArray as $rule) {
 
                 $parameter = null;
 
@@ -58,38 +59,68 @@ final class Validator
                         break;
 
                     case 'min':
-                        if ($parameter !== null && mb_strlen($value) < (int)$parameter) {
-                            $this->addError($field, "Minimum {$parameter} characters.");
+                        if (mb_strlen($value) < (int)$parameter) {
+                            $this->addError(
+                                $field,
+                                "Minimum {$parameter} characters."
+                            );
                         }
                         break;
 
                     case 'max':
-                        if ($parameter !== null && mb_strlen($value) > (int)$parameter) {
-                            $this->addError($field, "Maximum {$parameter} characters.");
+                        if (mb_strlen($value) > (int)$parameter) {
+                            $this->addError(
+                                $field,
+                                "Maximum {$parameter} characters."
+                            );
                         }
                         break;
 
                     case 'min_value':
-                        if ($parameter !== null && $value !== '' && (float)$value < (float)$parameter) {
-                            $this->addError($field, "Minimum value is {$parameter}.");
+                        if ($value !== '' && (float)$value < (float)$parameter) {
+                            $this->addError(
+                                $field,
+                                "Minimum value is {$parameter}."
+                            );
                         }
                         break;
 
                     case 'max_value':
-                        if ($parameter !== null && $value !== '' && (float)$value > (float)$parameter) {
-                            $this->addError($field, "Maximum value is {$parameter}.");
-                        }
-                        break;
-
-                    case 'date':
-                        if ($value !== '' && strtotime($value) === false) {
-                            $this->addError($field, 'Invalid date.');
+                        if ($value !== '' && (float)$value > (float)$parameter) {
+                            $this->addError(
+                                $field,
+                                "Maximum value is {$parameter}."
+                            );
                         }
                         break;
 
                     case 'url':
                         if ($value !== '' && !filter_var($value, FILTER_VALIDATE_URL)) {
                             $this->addError($field, 'Invalid URL.');
+                        }
+                        break;
+
+                    case 'alpha':
+                        if ($value !== '' && !preg_match('/^[a-zA-Z]+$/', $value)) {
+                            $this->addError(
+                                $field,
+                                'Only alphabetic characters are allowed.'
+                            );
+                        }
+                        break;
+
+                    case 'alpha_num':
+                        if ($value !== '' && !preg_match('/^[a-zA-Z0-9]+$/', $value)) {
+                            $this->addError(
+                                $field,
+                                'Only letters and numbers are allowed.'
+                            );
+                        }
+                        break;
+
+                    case 'regex':
+                        if ($value !== '' && $parameter !== null && !preg_match($parameter, $value)) {
+                            $this->addError($field, 'Invalid format.');
                         }
                         break;
                 }
@@ -108,7 +139,7 @@ final class Validator
     }
 
     /**
-     * Return all validation errors.
+     * Get all errors.
      */
     public function errors(): array
     {
@@ -116,7 +147,7 @@ final class Validator
     }
 
     /**
-     * Return the first error for a field.
+     * Get first error.
      */
     public function first(string $field): ?string
     {
@@ -124,15 +155,7 @@ final class Validator
     }
 
     /**
-     * Determine whether a field has errors.
-     */
-    public function has(string $field): bool
-    {
-        return isset($this->errors[$field]);
-    }
-
-    /**
-     * Determine whether validation failed.
+     * Determine if validation failed.
      */
     public function fails(): bool
     {
@@ -140,7 +163,7 @@ final class Validator
     }
 
     /**
-     * Determine whether validation passed.
+     * Determine if validation passed.
      */
     public function passes(): bool
     {

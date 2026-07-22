@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 final class Session
 {
-    private const SESSION_LIFETIME = 7200; // 2 hours
+    /**
+     * Session lifetime in seconds.
+     */
+    private const SESSION_LIFETIME = 7200;
 
     /**
      * Start the session securely.
@@ -30,7 +33,7 @@ final class Session
     }
 
     /**
-     * Check whether the session is active.
+     * Determine whether the session is active.
      */
     public static function isStarted(): bool
     {
@@ -120,11 +123,14 @@ final class Session
             setcookie(
                 session_name(),
                 '',
-                time() - 42000,
-                $params['path'],
-                $params['domain'],
-                (bool) $params['secure'],
-                (bool) $params['httponly']
+                [
+                    'expires'  => time() - 42000,
+                    'path'     => $params['path'],
+                    'domain'   => $params['domain'],
+                    'secure'   => (bool) $params['secure'],
+                    'httponly' => (bool) $params['httponly'],
+                    'samesite' => 'Lax',
+                ]
             );
         }
 
@@ -187,6 +193,6 @@ final class Session
     private static function isHttps(): bool
     {
         return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || ($_SERVER['SERVER_PORT'] ?? 80) === 443;
+            || (int) ($_SERVER['SERVER_PORT'] ?? 80) === 443;
     }
 }

@@ -2,28 +2,40 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
-use App\Models\User;
+use App\Database\Database;
+use PDO;
 
 final class Auth
 {
+    /**
+     * Session key used for the logged-in user.
+     */
+    private const SESSION_KEY = 'user_id';
+
     /**
      * Attempt to authenticate a user.
      */
     public static function attempt(string $email, string $password): bool
     {
-        Session::start();
+        /** @var PDO $db */
+        $db = Database::connection();
 
-        $userModel = new User();
+        $stmt = $db->prepare("
+            SELECT *
+            FROM users
+            WHERE email = :email
+            LIMIT 1
+        ");
 
-        $user = $userModel->findByEmail($email);
+        $stmt->execute([
+            'email' => $email,
+        ]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
-            return false;
-        }
-
-        if (!(bool) $user['is_active']) {
             return false;
         }
 
@@ -31,100 +43,73 @@ final class Auth
             return false;
         }
 
-        session_regenerate_id(true);
+        Session::regenerate();
 
-        Session::set('user_id', (int) $user['id']);
-        Session::set('role_id', (int) $user['role_id']);
-        Session::set('user_name', trim($user['first_name'] . ' ' . $user['last_name']));
-        Session::set('language', $user['language'] ?? 'de');
-
-        $userModel->updateLastLogin((int) $user['id']);
+        Session::set(self::SESSION_KEY, (int) $user['id']);
 
         return true;
     }
 
     /**
-     * Log out the current user.
-     */
-    public static function logout(): void
-    {
-        Session::start();
-
-        $_SESSION = [];
-
-        if (ini_get('session.use_cookies')) {
-            $params = session_get_cookie_params();
-
-            setcookie(
-                session_name(),
-                '',
-                time() - 42000,
-                $params['path'],
-                $params['domain'],
-                (bool) $params['secure'],
-                (bool) $params['httponly']
-            );
-        }
-
-        session_destroy();
-    }
-
-    /**
-     * Check whether a user is authenticated.
+     * Determine whether the user is authenticated.
      */
     public static function check(): bool
     {
-        Session::start();
-
-        return Session::has('user_id');
+        return Session::has(self::SESSION_KEY);
     }
 
     /**
-     * Return the current user's ID.
+     * Determine whether the user is a guest.
+     */
+    public static function guest(): bool
+    {
+        return !self::check();
+    }
+
+    /**
+     * Return the logged-in user.
+     */
+    public static function user(): ?array
+    {
+        if (!self::check()) {
+            return null;
+        }
+
+        /** @var PDO $db */
+        $db = Database::connection();
+
+        $stmt = $db->prepare("
+            SELECT *
+            FROM users
+            WHERE id = :id
+            LIMIT 1
+        ");
+
+        $stmt->execute([
+            'id' => Session::get(self::SESSION_KEY),
+        ]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Return the logged-in user's ID.
      */
     public static function id(): ?int
     {
-        Session::start();
-
-        return Session::has('user_id')
-            ? (int) Session::get('user_id')
-            : null;
+        return Session::get(self::SESSION_KEY);
     }
 
     /**
-     * Return the current user's role ID.
+     * Log the current user out.
      */
-    public static function roleId(): ?int
+    public static function logout(): void
     {
-        Session::start();
+        Session::forget(self::SESSION_KEY);
 
-        return Session::has('role_id')
-            ? (int) Session::get('role_id')
-            : null;
-    }
-
-    /**
-     * Return the current user's full name.
-     */
-    public static function userName(): ?string
-    {
-        Session::start();
-
-        return Session::has('user_name')
-            ? (string) Session::get('user_name')
-            : null;
-    }
-
-    /**
-     * Return the current user's language.
-     */
-    public static function language(): string
-    {
-        Session::start();
-
-        return Session::has('language')
-            ? (string) Session::get('language')
-            : 'de';
+        Session::regenerate();
     }
 
     /**
@@ -132,9 +117,8 @@ final class Auth
      */
     public static function requireLogin(): void
     {
-        if (!self::check()) {
-            header('Location: /login');
-            exit;
+        if (self::guest()) {
+            Response::redirect('/login');
         }
     }
 }

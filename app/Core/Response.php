@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 use JsonException;
+use RuntimeException;
 
 final class Response
 {
@@ -19,8 +20,10 @@ final class Response
     /**
      * Redirect to another URL.
      */
-    public static function redirect(string $url, int $status = 302): never
-    {
+    public static function redirect(
+        string $url,
+        int $status = 302
+    ): never {
         if (!headers_sent()) {
             http_response_code($status);
             header("Location: {$url}");
@@ -30,45 +33,58 @@ final class Response
     }
 
     /**
-     * Render an error view.
+     * Redirect back.
      */
-    public static function view(string $view, int $status = 200): never
+    public static function back(): never
     {
+        self::redirect($_SERVER['HTTP_REFERER'] ?? '/');
+    }
+
+    /**
+     * Render a view.
+     */
+    public static function view(
+        string $view,
+        array $data = [],
+        int $status = 200
+    ): never {
         self::status($status);
 
-        $file = APP_PATH . '/Views/' . $view . '.php';
-
-        if (file_exists($file)) {
-            require $file;
-        } else {
-            echo "<h1>{$status}</h1>";
-        }
+        View::render($view, $data);
 
         exit;
     }
 
     /**
-     * Return a 404 response.
+     * Return plain text.
      */
-    public static function notFound(): never
-    {
-        self::view('errors/404', 404);
+    public static function text(
+        string $text,
+        int $status = 200
+    ): never {
+        self::status($status);
+
+        header('Content-Type: text/plain; charset=UTF-8');
+
+        echo $text;
+
+        exit;
     }
 
     /**
-     * Return a 403 response.
+     * Return HTML.
      */
-    public static function forbidden(): never
-    {
-        self::view('errors/403', 403);
-    }
+    public static function html(
+        string $html,
+        int $status = 200
+    ): never {
+        self::status($status);
 
-    /**
-     * Return a 500 response.
-     */
-    public static function serverError(): never
-    {
-        self::view('errors/500', 500);
+        header('Content-Type: text/html; charset=UTF-8');
+
+        echo $html;
+
+        exit;
     }
 
     /**
@@ -76,11 +92,13 @@ final class Response
      *
      * @throws JsonException
      */
-    public static function json(array $data, int $status = 200): never
-    {
+    public static function json(
+        array $data,
+        int $status = 200
+    ): never {
         self::status($status);
 
-        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Type: application/json; charset=UTF-8');
 
         echo json_encode(
             $data,
@@ -99,12 +117,13 @@ final class Response
         string $path,
         ?string $filename = null
     ): never {
-        if (!file_exists($path)) {
-            self::notFound();
+        if (!is_file($path)) {
+            throw new RuntimeException("File not found: {$path}");
         }
 
         $filename ??= basename($path);
 
+        header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Content-Length: ' . filesize($path));
@@ -112,5 +131,29 @@ final class Response
         readfile($path);
 
         exit;
+    }
+
+    /**
+     * Return a 404 response.
+     */
+    public static function notFound(): never
+    {
+        self::view('errors.404', [], 404);
+    }
+
+    /**
+     * Return a 403 response.
+     */
+    public static function forbidden(): never
+    {
+        self::view('errors.403', [], 403);
+    }
+
+    /**
+     * Return a 500 response.
+     */
+    public static function serverError(): never
+    {
+        self::view('errors.500', [], 500);
     }
 }

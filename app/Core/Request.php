@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 final class Request
 {
@@ -41,11 +41,11 @@ final class Request
     }
 
     /**
-     * Get a request parameter (GET or POST).
+     * Get a request parameter (POST first, then GET).
      */
     public static function input(string $key, mixed $default = null): mixed
     {
-        return $_REQUEST[$key] ?? $default;
+        return $_POST[$key] ?? $_GET[$key] ?? $default;
     }
 
     /**
@@ -85,7 +85,8 @@ final class Request
      */
     public static function has(string $key): bool
     {
-        return array_key_exists($key, $_REQUEST);
+        return array_key_exists($key, $_POST)
+            || array_key_exists($key, $_GET);
     }
 
     /**
@@ -122,7 +123,7 @@ final class Request
     }
 
     /**
-     * Get client IP.
+     * Get client IP address.
      */
     public static function ip(): string
     {
@@ -166,6 +167,28 @@ final class Request
      */
     public static function fullUrl(): string
     {
-        return self::scheme() . '://' . self::host() . ($_SERVER['REQUEST_URI'] ?? '/');
+        return self::scheme()
+            . '://'
+            . self::host()
+            . ($_SERVER['REQUEST_URI'] ?? '/');
+    }
+
+    /**
+     * Determine if the request expects JSON.
+     */
+    public static function expectsJson(): bool
+    {
+        return str_contains(
+            $_SERVER['HTTP_ACCEPT'] ?? '',
+            'application/json'
+        );
+    }
+
+    /**
+     * Get the current request path without query string.
+     */
+    public static function path(): string
+    {
+        return trim(self::uri(), '/');
     }
 }

@@ -1,96 +1,95 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Anmeldung | Frankfurt AutoTrade DMS</title>
+    <title>Frankfurt AutoTrade Login</title>
 
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <style>
+
+        body{
+            margin:0;
+            font-family:Arial,Helvetica,sans-serif;
+            background:#f4f4f4;
+        }
+
+        .login{
+
+            width:380px;
+
+            margin:120px auto;
+
+            background:#fff;
+
+            padding:40px;
+
+            border-radius:10px;
+
+            box-shadow:0 5px 20px rgba(0,0,0,.1);
+
+        }
+
+        h1{
+
+            text-align:center;
+
+            margin-bottom:30px;
+
+        }
+
+        input{
+
+            width:100%;
+
+            padding:12px;
+
+            margin-bottom:15px;
+
+            box-sizing:border-box;
+
+        }
+
+        button{
+
+            width:100%;
+
+            padding:12px;
+
+            cursor:pointer;
+
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-<div class="login-container">
+<div class="login">
 
-    <div class="login-card">
+<h1>Dealer Login</h1>
 
-        <h1>Frankfurt AutoTrade</h1>
-        <p>Dealer Management System</p>
+<form method="post">
 
-        <?php if (!empty($error)) : ?>
-            <div class="alert alert-danger">
-                <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
-            </div>
-        <?php endif; ?>
+<input
+type="email"
+name="email"
+placeholder="Email">
 
-        <form
-            action="/login"
-            method="POST"
-            autocomplete="off"
-            novalidate>
+<input
+type="password"
+name="password"
+placeholder="Password">
 
-            <!-- CSRF Token -->
-            <input
-                type="hidden"
-                name="_token"
-                value="<?= htmlspecialchars(\Core\Session::get('_token') ?? '', ENT_QUOTES, 'UTF-8') ?>">
+<button>
 
-            <div class="form-group">
+Login
 
-                <label for="email">
-                    E-Mail
-                </label>
+</button>
 
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="<?= htmlspecialchars($email ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                    required
-                    autofocus
-                    autocomplete="username">
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="password">
-                    Passwort
-                </label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                    autocomplete="current-password">
-
-            </div>
-
-            <div class="form-group remember">
-
-                <label>
-
-                    <input
-                        type="checkbox"
-                        name="remember"
-                        value="1">
-
-                    Angemeldet bleiben
-
-                </label>
-
-            </div>
-
-            <button type="submit">
-                Anmelden
-            </button>
-
-        </form>
-
-    </div>
+</form>
 
 </div>
 

@@ -4,40 +4,43 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Core\Model;
 use PDO;
 
 final class User extends Model
 {
     /**
-     * Find a user by ID.
+     * Database table.
      */
-    public function findById(int $id): array|false
-    {
-        $sql = "
-            SELECT *
-            FROM users
-            WHERE id = :id
-            LIMIT 1
-        ";
+    protected string $table = 'users';
 
-        $statement = $this->db->prepare($sql);
+    /**
+     * Primary key.
+     */
+    protected string $primaryKey = 'id';
 
-        $statement->execute([
-            'id' => $id,
-        ]);
-
-        return $statement->fetch(PDO::FETCH_ASSOC);
-    }
+    /**
+     * Mass assignable fields.
+     */
+    protected array $fillable = [
+        'role_id',
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'phone',
+        'language',
+        'is_active',
+        'last_login',
+    ];
 
     /**
      * Find a user by email.
      */
-    public function findByEmail(string $email): array|false
+    public function findByEmail(string $email): ?array
     {
         $sql = "
             SELECT *
-            FROM users
+            FROM {$this->table}
             WHERE email = :email
             LIMIT 1
         ";
@@ -48,18 +51,39 @@ final class User extends Model
             'email' => strtolower(trim($email)),
         ]);
 
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        $user = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
     }
 
     /**
-     * Update the user's last login timestamp.
+     * Create a new user.
+     */
+    public function createUser(array $data): bool
+    {
+        $data['email'] = strtolower(trim($data['email']));
+
+        $data['password'] = password_hash(
+            $data['password'],
+            PASSWORD_DEFAULT
+        );
+
+        $data['phone'] ??= null;
+        $data['language'] ??= 'de';
+        $data['is_active'] ??= true;
+
+        return $this->create($data);
+    }
+
+    /**
+     * Update the last login timestamp.
      */
     public function updateLastLogin(int $id): bool
     {
         $sql = "
-            UPDATE users
+            UPDATE {$this->table}
             SET last_login = NOW()
-            WHERE id = :id
+            WHERE {$this->primaryKey} = :id
         ";
 
         $statement = $this->db->prepare($sql);
@@ -70,44 +94,76 @@ final class User extends Model
     }
 
     /**
-     * Create a new user.
+     * Return all active users.
      */
-    public function create(array $data): bool
+    public function active(): array
     {
         $sql = "
-            INSERT INTO users (
-                role_id,
-                first_name,
-                last_name,
-                email,
-                password,
-                phone,
-                language,
-                is_active
-            )
-            VALUES (
-                :role_id,
-                :first_name,
-                :last_name,
-                :email,
-                :password,
-                :phone,
-                :language,
-                :is_active
-            )
+            SELECT *
+            FROM {$this->table}
+            WHERE is_active = 1
+            ORDER BY first_name, last_name
+        ";
+
+        return $this->db
+            ->query($sql)
+            ->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Activate a user.
+     */
+    public function activate(int $id): bool
+    {
+        return $this->setStatus($id, true);
+    }
+
+    /**
+     * Deactivate a user.
+     */
+    public function deactivate(int $id): bool
+    {
+        return $this->setStatus($id, false);
+    }
+
+    /**
+     * Change a user's password.
+     */
+    public function changePassword(int $id, string $password): bool
+    {
+        $sql = "
+            UPDATE {$this->table}
+            SET password = :password
+            WHERE {$this->primaryKey} = :id
         ";
 
         $statement = $this->db->prepare($sql);
 
         return $statement->execute([
-            'role_id'    => (int) $data['role_id'],
-            'first_name' => trim($data['first_name']),
-            'last_name'  => trim($data['last_name']),
-            'email'      => strtolower(trim($data['email'])),
-            'password'   => password_hash($data['password'], PASSWORD_DEFAULT),
-            'phone'      => $data['phone'] ?? null,
-            'language'   => $data['language'] ?? 'de',
-            'is_active'  => (bool) ($data['is_active'] ?? true),
+            'id'       => $id,
+            'password' => password_hash(
+                $password,
+                PASSWORD_DEFAULT
+            ),
+        ]);
+    }
+
+    /**
+     * Update user status.
+     */
+    private function setStatus(int $id, bool $active): bool
+    {
+        $sql = "
+            UPDATE {$this->table}
+            SET is_active = :active
+            WHERE {$this->primaryKey} = :id
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        return $statement->execute([
+            'id'     => $id,
+            'active' => $active,
         ]);
     }
 }
