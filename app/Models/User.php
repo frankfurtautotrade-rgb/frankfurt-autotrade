@@ -1,24 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use Core\Database;
+use Core\Model;
 use PDO;
 
-class User
+final class User extends Model
 {
     /**
-     * Database connection.
-     */
-    private PDO $db;
-
-    public function __construct()
-    {
-        $this->db = Database::connection();
-    }
-
-    /**
-     * Find user by ID.
+     * Find a user by ID.
      */
     public function findById(int $id): array|false
     {
@@ -32,14 +24,14 @@ class User
         $statement = $this->db->prepare($sql);
 
         $statement->execute([
-            'id' => $id
+            'id' => $id,
         ]);
 
         return $statement->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Find user by email.
+     * Find a user by email.
      */
     public function findByEmail(string $email): array|false
     {
@@ -53,14 +45,14 @@ class User
         $statement = $this->db->prepare($sql);
 
         $statement->execute([
-            'email' => $email
+            'email' => strtolower(trim($email)),
         ]);
 
         return $statement->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Update last login timestamp.
+     * Update the user's last login timestamp.
      */
     public function updateLastLogin(int $id): bool
     {
@@ -73,7 +65,7 @@ class User
         $statement = $this->db->prepare($sql);
 
         return $statement->execute([
-            'id' => $id
+            'id' => $id,
         ]);
     }
 
@@ -108,14 +100,14 @@ class User
         $statement = $this->db->prepare($sql);
 
         return $statement->execute([
-            'role_id'    => $data['role_id'],
-            'first_name' => $data['first_name'],
-            'last_name'  => $data['last_name'],
-            'email'      => $data['email'],
+            'role_id'    => (int) $data['role_id'],
+            'first_name' => trim($data['first_name']),
+            'last_name'  => trim($data['last_name']),
+            'email'      => strtolower(trim($data['email'])),
             'password'   => password_hash($data['password'], PASSWORD_DEFAULT),
             'phone'      => $data['phone'] ?? null,
             'language'   => $data['language'] ?? 'de',
-            'is_active'  => $data['is_active'] ?? true,
+            'is_active'  => (bool) ($data['is_active'] ?? true),
         ]);
     }
 }

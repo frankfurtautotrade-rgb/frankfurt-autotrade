@@ -1,31 +1,24 @@
 <?php
 
-use Controllers\Admin\DashboardController;
-use Controllers\Admin\LoginController;
-use Controllers\Admin\VehicleController;
+use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\VehicleController;
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 
 $router->get(
-    '/admin/dashboard',
+    '/admin',
     DashboardController::class,
     'index'
 );
 
 $router->get(
-    '/admin/login',
-    LoginController::class,
+    '/admin/dashboard',
+    DashboardController::class,
     'index'
-);
-
-$router->post(
-    '/admin/login',
-    LoginController::class,
-    'login'
-);
-
-$router->get(
-    '/admin/logout',
-    LoginController::class,
-    'logout'
 );
 
 $router->get(

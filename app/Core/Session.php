@@ -1,21 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core;
 
-class Session
+final class Session
 {
+    private const SESSION_LIFETIME = 7200; // 2 hours
+
     /**
-     * Start the session.
+     * Start the session securely.
      */
     public static function start(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
         }
+
+        session_set_cookie_params([
+            'lifetime' => self::SESSION_LIFETIME,
+            'path'     => '/',
+            'domain'   => '',
+            'secure'   => self::isHttps(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        session_start();
     }
 
     /**
-     * Store a value in the session.
+     * Check whether the session is active.
+     */
+    public static function isStarted(): bool
+    {
+        return session_status() === PHP_SESSION_ACTIVE;
+    }
+
+    /**
+     * Store a value.
      */
     public static function set(string $key, mixed $value): void
     {
@@ -25,7 +48,7 @@ class Session
     }
 
     /**
-     * Get a value from the session.
+     * Retrieve a value.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
@@ -35,7 +58,7 @@ class Session
     }
 
     /**
-     * Check if a session key exists.
+     * Determine whether a key exists.
      */
     public static function has(string $key): bool
     {
@@ -45,13 +68,21 @@ class Session
     }
 
     /**
-     * Remove a session value.
+     * Remove a key.
      */
     public static function remove(string $key): void
     {
         self::start();
 
         unset($_SESSION[$key]);
+    }
+
+    /**
+     * Alias of remove().
+     */
+    public static function forget(string $key): void
+    {
+        self::remove($key);
     }
 
     /**
@@ -65,11 +96,21 @@ class Session
     }
 
     /**
+     * Alias of clear().
+     */
+    public static function flush(): void
+    {
+        self::clear();
+    }
+
+    /**
      * Destroy the session completely.
      */
     public static function destroy(): void
     {
-        self::start();
+        if (!self::isStarted()) {
+            return;
+        }
 
         $_SESSION = [];
 
@@ -82,8 +123,8 @@ class Session
                 time() - 42000,
                 $params['path'],
                 $params['domain'],
-                $params['secure'],
-                $params['httponly']
+                (bool) $params['secure'],
+                (bool) $params['httponly']
             );
         }
 
@@ -93,11 +134,11 @@ class Session
     /**
      * Regenerate the session ID.
      */
-    public static function regenerate(): void
+    public static function regenerate(bool $deleteOldSession = true): void
     {
         self::start();
 
-        session_regenerate_id(true);
+        session_regenerate_id($deleteOldSession);
     }
 
     /**
@@ -108,5 +149,44 @@ class Session
         self::start();
 
         return $_SESSION;
+    }
+
+    /**
+     * Get and remove a value.
+     */
+    public static function pull(string $key, mixed $default = null): mixed
+    {
+        self::start();
+
+        $value = $_SESSION[$key] ?? $default;
+
+        unset($_SESSION[$key]);
+
+        return $value;
+    }
+
+    /**
+     * Store a flash value.
+     */
+    public static function flash(string $key, mixed $value): void
+    {
+        self::set('_flash.' . $key, $value);
+    }
+
+    /**
+     * Retrieve a flash value.
+     */
+    public static function getFlash(string $key, mixed $default = null): mixed
+    {
+        return self::pull('_flash.' . $key, $default);
+    }
+
+    /**
+     * Determine whether HTTPS is enabled.
+     */
+    private static function isHttps(): bool
+    {
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ($_SERVER['SERVER_PORT'] ?? 80) === 443;
     }
 }

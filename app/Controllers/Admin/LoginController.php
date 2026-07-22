@@ -1,62 +1,67 @@
 <?php
 
-namespace Controllers\Admin;
+namespace App\Controllers\Admin;
 
+use Core\Auth;
 use Core\Controller;
-use Core\Request;
-use Core\Database;
 use Core\Session;
 
 class LoginController extends Controller
 {
+    /**
+     * Display login page.
+     */
     public function index(): void
     {
-        $this->view('admin/login/index');
+        Session::start();
+
+        if (!Session::has('_token')) {
+            Session::set('_token', bin2hex(random_bytes(32)));
+        }
+
+        $this->view('auth/login');
     }
 
+    /**
+     * Process login.
+     */
     public function login(): void
     {
-        $email = Request::post('email');
-        $password = Request::post('password');
+        Session::start();
 
-        $pdo = Database::connection();
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        if ($email === '' || $password === '') {
 
-        $stmt->execute([$email]);
+            $error = 'Bitte E-Mail und Passwort eingeben.';
 
-        $user = $stmt->fetch();
+            $this->view('auth/login', compact('error'));
 
-        if (!$user) {
-            die('User not found');
+            return;
         }
 
-        if (password_verify($password, $user['password'])) {
+        if (!Auth::attempt($email, $password)) {
 
-   Session::start();
+            $error = 'Ungültige E-Mail oder Passwort.';
 
-Session::set('user_id', $user['id']);
+            $this->view('auth/login', compact('error'));
 
-header('Location: /admin/dashboard');
-
-exit;
-
-        } else {
-
-            echo "Invalid password!";
-
+            return;
         }
+
+        header('Location: /admin');
+        exit;
     }
 
-public function logout(): void
-{
-    Session::start();
+    /**
+     * Logout.
+     */
+    public function logout(): void
+    {
+        Auth::logout();
 
-    Session::destroy();
-
-    header('Location: /admin/login');
-
-    exit;
-}
-
+        header('Location: /login');
+        exit;
+    }
 }

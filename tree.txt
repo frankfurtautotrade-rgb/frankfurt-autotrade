@@ -1,0 +1,305 @@
+Folder PATH listing for volume OS
+Volume serial number is 000000C1 84C6:FA6D
+C:.
+¦   .env
+¦   .gitignore
+¦   bootstrap.php
+¦   composer.json
+¦   hash.php
+¦   README.md
+¦   tree.txt
+¦   
++---app
+¦   +---Controllers
+¦   ¦   ¦   AuthController.php
+¦   ¦   ¦   
+¦   ¦   +---Admin
+¦   ¦   ¦       AuthController.php
+¦   ¦   ¦       DashboardController.php
+¦   ¦   ¦       FinancingController.php
+¦   ¦   ¦       InquiryController.php
+¦   ¦   ¦       LoginController.php
+¦   ¦   ¦       SettingsController.php
+¦   ¦   ¦       VehicleController.php
+¦   ¦   ¦       
+¦   ¦   +---Front
+¦   ¦           ContactController.php
+¦   ¦           FinancingController.php
+¦   ¦           HomeController.php
+¦   ¦           VehicleController.php
+¦   ¦           
+¦   +---Core
+¦   ¦       Auth.php
+¦   ¦       Controller.php
+¦   ¦       Database.php
+¦   ¦       Language.php
+¦   ¦       Model.php
+¦   ¦       Request.php
+¦   ¦       Response.php
+¦   ¦       Router.php
+¦   ¦       Session.php
+¦   ¦       
+¦   +---Helpers
+¦   ¦       functions.php
+¦   ¦       
+¦   +---Middleware
+¦   +---Models
+¦   ¦       Admin.php
+¦   ¦       Financing.php
+¦   ¦       Image.php
+¦   ¦       Inquiry.php
+¦   ¦       Settings.php
+¦   ¦       User.php
+¦   ¦       Vehicle.php
+¦   ¦       
+¦   +---Views
+¦       +---admin
+¦       ¦   +---dashboard
+¦       ¦   ¦       index.php
+¦       ¦   ¦       
+¦       ¦   +---login
+¦       ¦   ¦       index.php
+¦       ¦   ¦       
+¦       ¦   +---vehicles
+¦       ¦           create.php
+¦       ¦           index.php
+¦       ¦           
+¦       +---auth
+¦       ¦       login.php
+¦       ¦       
+¦       +---font
+¦       +---layouts
+¦       ¦       admin.php
+¦       ¦       
+¦       +---partials
+¦       ¦       header.php
+¦       ¦       sidebar.php
+¦       ¦       
+¦       +---website
++---config
+¦       admin.php
+¦       config.php
+¦       database.php
+¦       routes.php
+¦       web.php
+¦       
++---database
+¦   ¦   schema.sql
+¦   ¦   seed.sql
+¦   ¦   
+¦   +---backups
+¦   +---schema
+¦   ¦       01_roles.sql
+¦   ¦       02_users.sql
+¦   ¦       03_permissions.sql
+¦   ¦       04_role_permissions.sql
+¦   ¦       05_vehicles.sql
+¦   ¦       06_vehicle_translations.sql
+¦   ¦       07_vehicle_images.sql
+¦   ¦       08_vehicle_features.sql
+¦   ¦       09_vehicle_feature_values.sql
+¦   ¦       10_customers.sql
+¦   ¦       11_customer_addresses.sql
+¦   ¦       12_sales.sql
+¦   ¦       13_payments.sql
+¦   ¦       14_trade_ins.sql
+¦   ¦       15_finance_requests.sql
+¦   ¦       16_inquiries.sql
+¦   ¦       17_activity_log.sql
+¦   ¦       18_settings.sql
+¦   ¦       19_languages.sql
+¦   ¦       20_countries.sql
+¦   ¦       
+¦   +---seeds
+¦           countries.sql
+¦           languages.sql
+¦           permissions.sql
+¦           roles.sql
+¦           vehicle_features.sql
+¦           
++---lang
++---public
+¦   ¦   .htaccess
+¦   ¦   index.php
+¦   ¦   
+¦   +---admin_old
+¦   ¦   ¦   index.php
+¦   ¦   ¦   login.php
+¦   ¦   ¦   logout.php
+¦   ¦   ¦   
+¦   ¦   +---dashboard
+¦   ¦   +---financing
+¦   ¦   ¦       index.php
+¦   ¦   ¦       
+¦   ¦   +---includes
+¦   ¦   ¦       footer.php
+¦   ¦   ¦       header.php
+¦   ¦   ¦       sidebar.php
+¦   ¦   ¦       topbar.php
+¦   ¦   ¦       
+¦   ¦   +---inquiries
+¦   ¦   ¦       index.php
+¦   ¦   ¦       
+¦   ¦   +---settings
+¦   ¦   ¦       index.php
+¦   ¦   ¦       languages.php
+¦   ¦   ¦       
+¦   ¦   +---vehicles
+¦   ¦           add.php
+¦   ¦           edit.php
+¦   ¦           index.php
+¦   ¦           photos.php
+¦   ¦           sold.php
+¦   ¦           
+¦   +---api
+¦   ¦       upload.php
+¦   ¦       
+¦   +---assets
+¦   ¦   +---css
+¦   ¦           admin.css
+¦   ¦           app.css
+¦   ¦           forms.css
+¦   ¦           responsive.css
+¦   ¦           style.css
+¦   ¦           
+¦   +---fonts
+¦   +---images
+¦   ¦   ¦   favicon.ico
+¦   ¦   ¦   logo.png
+¦   ¦   ¦   
+¦   ¦   +---backgrounds
+¦   ¦   +---icons
+¦   +---js
+¦   ¦       admin.js
+¦   ¦       app.js
+¦   ¦       uploader.js
+¦   ¦       
+¦   +---storage
+¦   ¦   +---vehicles
+¦   ¦       +---2
+¦   ¦       ¦       001.jpeg
+¦   ¦       ¦       002.jpeg
+¦   ¦       ¦       003.jpeg
+¦   ¦       ¦       004.jpeg
+¦   ¦       ¦       005.jpeg
+¦   ¦       ¦       006.jpeg
+¦   ¦       ¦       007.jpeg
+¦   ¦       ¦       008.jpeg
+¦   ¦       ¦       009.jpeg
+¦   ¦       ¦       010.jpeg
+¦   ¦       ¦       011.jpeg
+¦   ¦       ¦       012.jpeg
+¦   ¦       ¦       013.jpeg
+¦   ¦       ¦       014.jpeg
+¦   ¦       ¦       015.jpeg
+¦   ¦       ¦       016.jpeg
+¦   ¦       ¦       017.jpeg
+¦   ¦       ¦       018.jpeg
+¦   ¦       ¦       019.jpeg
+¦   ¦       ¦       020.jpeg
+¦   ¦       ¦       
+¦   ¦       +---3
+¦   ¦       ¦       001.jpeg
+¦   ¦       ¦       002.jpeg
+¦   ¦       ¦       003.jpeg
+¦   ¦       ¦       004.jpeg
+¦   ¦       ¦       005.jpeg
+¦   ¦       ¦       006.jpeg
+¦   ¦       ¦       007.jpeg
+¦   ¦       ¦       008.jpeg
+¦   ¦       ¦       009.jpeg
+¦   ¦       ¦       010.jpeg
+¦   ¦       ¦       011.jpeg
+¦   ¦       ¦       012.jpeg
+¦   ¦       ¦       013.jpeg
+¦   ¦       ¦       014.jpeg
+¦   ¦       ¦       015.jpeg
+¦   ¦       ¦       016.jpeg
+¦   ¦       ¦       017.jpeg
+¦   ¦       ¦       018.jpeg
+¦   ¦       ¦       019.jpeg
+¦   ¦       ¦       020.jpeg
+¦   ¦       ¦       021.jpeg
+¦   ¦       ¦       022.jpeg
+¦   ¦       ¦       023.jpeg
+¦   ¦       ¦       024.jpeg
+¦   ¦       ¦       025.jpeg
+¦   ¦       ¦       026.jpeg
+¦   ¦       ¦       027.jpeg
+¦   ¦       ¦       028.jpeg
+¦   ¦       ¦       029.jpeg
+¦   ¦       ¦       030.jpeg
+¦   ¦       ¦       031.jpeg
+¦   ¦       ¦       032.jpeg
+¦   ¦       ¦       033.jpeg
+¦   ¦       ¦       034.jpeg
+¦   ¦       ¦       035.jpeg
+¦   ¦       ¦       036.jpeg
+¦   ¦       ¦       037.jpeg
+¦   ¦       ¦       038.jpeg
+¦   ¦       ¦       039.jpg
+¦   ¦       ¦       
+¦   ¦       +---4
+¦   ¦       ¦       001.jpeg
+¦   ¦       ¦       002.jpeg
+¦   ¦       ¦       003.jpeg
+¦   ¦       ¦       004.jpeg
+¦   ¦       ¦       005.jpeg
+¦   ¦       ¦       006.jpeg
+¦   ¦       ¦       007.jpeg
+¦   ¦       ¦       008.jpeg
+¦   ¦       ¦       009.jpeg
+¦   ¦       ¦       010.jpeg
+¦   ¦       ¦       011.jpeg
+¦   ¦       ¦       012.jpeg
+¦   ¦       ¦       013.jpeg
+¦   ¦       ¦       014.jpeg
+¦   ¦       ¦       015.jpeg
+¦   ¦       ¦       016.jpeg
+¦   ¦       ¦       017.jpeg
+¦   ¦       ¦       018.jpeg
+¦   ¦       ¦       019.jpeg
+¦   ¦       ¦       020.jpeg
+¦   ¦       ¦       021.jpeg
+¦   ¦       ¦       022.jpeg
+¦   ¦       ¦       023.jpeg
+¦   ¦       ¦       024.jpeg
+¦   ¦       ¦       025.jpeg
+¦   ¦       ¦       026.jpeg
+¦   ¦       ¦       027.jpeg
+¦   ¦       ¦       028.jpeg
+¦   ¦       ¦       029.jpeg
+¦   ¦       ¦       030.jpeg
+¦   ¦       ¦       031.jpeg
+¦   ¦       ¦       032.jpeg
+¦   ¦       ¦       033.jpeg
+¦   ¦       ¦       034.jpeg
+¦   ¦       ¦       035.jpeg
+¦   ¦       ¦       036.jpeg
+¦   ¦       ¦       037.jpeg
+¦   ¦       ¦       038.jpeg
+¦   ¦       ¦       039.jpg
+¦   ¦       ¦       
+¦   ¦       +---5
+¦   ¦               001.jpeg
+¦   ¦               
+¦   +---uploads
++---storage
+¦   +---logs
+¦   +---uploads
+¦       +---documents
+¦       +---vehicles
+¦       +---videos
++---vendor
+    ¦   autoload.php
+    ¦   
+    +---composer
+            autoload_classmap.php
+            autoload_namespaces.php
+            autoload_psr4.php
+            autoload_real.php
+            autoload_static.php
+            ClassLoader.php
+            LICENSE
+            platform_check.php
+            

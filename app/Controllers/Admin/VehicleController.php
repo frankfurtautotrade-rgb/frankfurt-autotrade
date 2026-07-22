@@ -1,19 +1,22 @@
 <?php
 
-namespace Controllers\Admin;
+namespace App\Controllers\Admin;
 
+use App\Models\Vehicle;
 use Core\Controller;
 use Core\Session;
-use Models\Vehicle;
 
 class VehicleController extends Controller
 {
+    /**
+     * Display all vehicles.
+     */
     public function index(): void
     {
         Session::start();
 
         if (!Session::has('user_id')) {
-            header('Location: /admin/login');
+            header('Location: /login');
             exit;
         }
 
@@ -23,30 +26,36 @@ class VehicleController extends Controller
 
         $this->view('admin/vehicles/index', [
             'title'    => 'Vehicles',
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
         ]);
     }
 
+    /**
+     * Display create vehicle form.
+     */
     public function create(): void
     {
         Session::start();
 
         if (!Session::has('user_id')) {
-            header('Location: /admin/login');
+            header('Location: /login');
             exit;
         }
 
         $this->view('admin/vehicles/create', [
-            'title' => 'Add Vehicle'
+            'title' => 'Add Vehicle',
         ]);
     }
 
+    /**
+     * Store a new vehicle.
+     */
     public function store(): void
     {
         Session::start();
 
         if (!Session::has('user_id')) {
-            header('Location: /admin/login');
+            header('Location: /login');
             exit;
         }
 

@@ -8,6 +8,26 @@ require_once __DIR__ . '/../bootstrap.php';
 
 /*
 |--------------------------------------------------------------------------
+| Load Application Configuration
+|--------------------------------------------------------------------------
+*/
+
+$app = require __DIR__ . '/../config/app.php';
+
+date_default_timezone_set($app['timezone']);
+
+ini_set('default_charset', $app['charset']);
+
+if ($app['environment'] === 'development' && $app['debug']) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '0');
+}
+
+/*
+|--------------------------------------------------------------------------
 | Create Router
 |--------------------------------------------------------------------------
 */
@@ -44,7 +64,7 @@ $requestUri = parse_url(
 | Example:
 | http://localhost/frankfurt-autotrade/public/login
 |
-| Set:
+| Development:
 | $basePath = '/frankfurt-autotrade/public';
 |
 | Production:
@@ -58,7 +78,7 @@ if ($basePath !== '' && str_starts_with($requestUri, $basePath)) {
     $requestUri = substr($requestUri, strlen($basePath));
 }
 
-$requestUri = $requestUri === '' ? '/' : $requestUri;
+$requestUri = $requestUri === '' ? '/' : '/'.trim($requestUri, '/');
 
 /*
 |--------------------------------------------------------------------------

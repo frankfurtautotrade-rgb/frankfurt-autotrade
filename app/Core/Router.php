@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core;
 
-use Core\Response;
+use RuntimeException;
 
-class Router
+final class Router
 {
     /**
-     * Registered routes
-     *
-     * @var array
+     * Registered routes.
      */
     private array $routes = [];
 
     /**
-     * Register GET route
+     * Register a GET route.
      */
     public function get(string $uri, string $controller, string $method): void
     {
@@ -22,7 +22,7 @@ class Router
     }
 
     /**
-     * Register POST route
+     * Register a POST route.
      */
     public function post(string $uri, string $controller, string $method): void
     {
@@ -30,7 +30,31 @@ class Router
     }
 
     /**
-     * Store route
+     * Register a PUT route.
+     */
+    public function put(string $uri, string $controller, string $method): void
+    {
+        $this->addRoute('PUT', $uri, $controller, $method);
+    }
+
+    /**
+     * Register a PATCH route.
+     */
+    public function patch(string $uri, string $controller, string $method): void
+    {
+        $this->addRoute('PATCH', $uri, $controller, $method);
+    }
+
+    /**
+     * Register a DELETE route.
+     */
+    public function delete(string $uri, string $controller, string $method): void
+    {
+        $this->addRoute('DELETE', $uri, $controller, $method);
+    }
+
+    /**
+     * Store a route.
      */
     private function addRoute(
         string $requestMethod,
@@ -39,15 +63,15 @@ class Router
         string $method
     ): void {
         $this->routes[] = [
-            'requestMethod' => strtoupper($requestMethod),
-            'uri'           => $this->normalize($uri),
-            'controller'    => $controller,
-            'method'        => $method,
+            'method' => strtoupper($requestMethod),
+            'uri' => $this->normalize($uri),
+            'controller' => $controller,
+            'action' => $method,
         ];
     }
 
     /**
-     * Return all routes
+     * Return all registered routes.
      */
     public function routes(): array
     {
@@ -55,21 +79,23 @@ class Router
     }
 
     /**
-     * Dispatch current request
+     * Dispatch the request.
      */
-    public function dispatch(string $requestMethod, string $requestUri): void
-    {
+    public function dispatch(
+        string $requestMethod,
+        string $requestUri
+    ): void {
         $requestMethod = strtoupper($requestMethod);
-        $requestUri    = $this->normalize($requestUri);
+        $requestUri = $this->normalize($requestUri);
 
         foreach ($this->routes as $route) {
 
-            if ($route['requestMethod'] !== $requestMethod) {
+            if ($route['method'] !== $requestMethod) {
                 continue;
             }
 
             $pattern = preg_replace(
-                '/\{[a-zA-Z_]+\}/',
+                '/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/',
                 '([^/]+)',
                 $route['uri']
             );
@@ -82,17 +108,11 @@ class Router
 
             array_shift($matches);
 
-            $controller = new $route['controller'];
-
-            $method = $route['method'];
-
-            if (!method_exists($controller, $method)) {
-                throw new \Exception(
-                    "Method {$method} not found in controller " . get_class($controller)
-                );
-            }
-
-            $controller->$method(...$matches);
+            $this->invoke(
+                $route['controller'],
+                $route['action'],
+                $matches
+            );
 
             return;
         }
@@ -101,14 +121,44 @@ class Router
     }
 
     /**
-     * Normalize URI
+     * Invoke a controller action.
+     */
+    private function invoke(
+        string $controllerClass,
+        string $method,
+        array $parameters
+    ): void {
+
+        if (!class_exists($controllerClass)) {
+            throw new RuntimeException(
+                "Controller not found: {$controllerClass}"
+            );
+        }
+
+        $controller = new $controllerClass();
+
+        if (!method_exists($controller, $method)) {
+            throw new RuntimeException(
+                "Method {$method} not found in {$controllerClass}"
+            );
+        }
+
+        $controller->{$method}(...$parameters);
+    }
+
+    /**
+     * Normalize a URI.
      */
     private function normalize(string $uri): string
     {
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $path = parse_url($uri, PHP_URL_PATH);
 
-        $uri = rtrim($uri, '/');
+        if (!is_string($path)) {
+            return '/';
+        }
 
-        return $uri === '' ? '/' : $uri;
+        $path = '/' . trim($path, '/');
+
+        return $path === '/' ? '/' : rtrim($path, '/');
     }
 }

@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core;
 
 use App\Models\User;
 
-class Auth
+final class Auth
 {
     /**
      * Attempt to authenticate a user.
@@ -29,14 +31,14 @@ class Auth
             return false;
         }
 
+        session_regenerate_id(true);
+
         Session::set('user_id', (int) $user['id']);
         Session::set('role_id', (int) $user['role_id']);
         Session::set('user_name', trim($user['first_name'] . ' ' . $user['last_name']));
-        Session::set('language', $user['language']);
+        Session::set('language', $user['language'] ?? 'de');
 
         $userModel->updateLastLogin((int) $user['id']);
-
-        session_regenerate_id(true);
 
         return true;
     }
@@ -59,8 +61,8 @@ class Auth
                 time() - 42000,
                 $params['path'],
                 $params['domain'],
-                $params['secure'],
-                $params['httponly']
+                (bool) $params['secure'],
+                (bool) $params['httponly']
             );
         }
 
@@ -102,14 +104,14 @@ class Auth
     }
 
     /**
-     * Return the current user's name.
+     * Return the current user's full name.
      */
     public static function userName(): ?string
     {
         Session::start();
 
         return Session::has('user_name')
-            ? Session::get('user_name')
+            ? (string) Session::get('user_name')
             : null;
     }
 
@@ -121,7 +123,18 @@ class Auth
         Session::start();
 
         return Session::has('language')
-            ? Session::get('language')
+            ? (string) Session::get('language')
             : 'de';
+    }
+
+    /**
+     * Require authentication.
+     */
+    public static function requireLogin(): void
+    {
+        if (!self::check()) {
+            header('Location: /login');
+            exit;
+        }
     }
 }
