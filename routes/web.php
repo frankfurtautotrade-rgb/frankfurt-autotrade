@@ -4,8 +4,17 @@ declare(strict_types=1);
 
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Controllers\HomeController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
+
+/*
+|--------------------------------------------------------------------------
+| Home
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/', [HomeController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -42,3 +51,19 @@ $router->get(
     [DashboardController::class, 'index'],
     AuthMiddleware::class
 );
+
+/*
+|--------------------------------------------------------------------------
+| Development / Testing
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/test-querybuilder', function () {
+
+    $users = \App\Core\QueryBuilder::table('users')->get();
+
+    echo '<pre>';
+    print_r($users);
+    echo '</pre>';
+
+});

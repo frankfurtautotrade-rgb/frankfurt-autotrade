@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-class Router
+use RuntimeException;
+
+final class Router
 {
     /**
      * Registered routes.
      *
-     * @var array<string, array<string, array>>
+     * @var array<string, array<string, array{
+     *     action: callable|array{0: class-string, 1: string},
+     *     middleware: ?class-string
+     * }>>
      */
     private array $routes = [];
 
@@ -44,6 +49,7 @@ class Router
         callable|array $action,
         ?string $middleware
     ): void {
+        $method = strtoupper($method);
         $uri = $this->normalizeUri($uri);
 
         $this->routes[$method][$uri] = [
@@ -57,6 +63,7 @@ class Router
      */
     public function dispatch(string $method, string $uri): void
     {
+        $method = strtoupper($method);
         $uri = $this->normalizeUri($uri);
 
         if (!isset($this->routes[$method][$uri])) {
@@ -66,55 +73,66 @@ class Router
 
         $route = $this->routes[$method][$uri];
 
-        /*
-        |--------------------------------------------------------------------------
-        | Execute middleware
-        |--------------------------------------------------------------------------
-        */
+        $this->executeMiddleware($route['middleware']);
 
-        if (!empty($route['middleware'])) {
+        $this->executeAction($route['action']);
+    }
 
-            $middleware = $route['middleware'];
-
-            if (!class_exists($middleware)) {
-                throw new \Exception(
-                    "Middleware {$middleware} does not exist."
-                );
-            }
-
-            if (!method_exists($middleware, 'handle')) {
-                throw new \Exception(
-                    "Middleware {$middleware} must contain handle()."
-                );
-            }
-
-            $middleware::handle();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Execute action
-        |--------------------------------------------------------------------------
-        */
-
-        $action = $route['action'];
-
-        // Closure
-
-        if (is_callable($action)) {
-            call_user_func($action);
+    /**
+     * Execute route middleware.
+     */
+    private function executeMiddleware(?string $middleware): void
+    {
+        if ($middleware === null) {
             return;
         }
 
-        // Controller
+        if (!class_exists($middleware)) {
+            throw new RuntimeException(
+                "Middleware '{$middleware}' does not exist."
+            );
+        }
+
+        if (!method_exists($middleware, 'handle')) {
+            throw new RuntimeException(
+                "Middleware '{$middleware}' must implement handle()."
+            );
+        }
+
+        $middleware::handle();
+    }
+
+    /**
+     * Execute route action.
+     *
+     * @param callable|array{0: class-string, 1: string} $action
+     */
+    private function executeAction(callable|array $action): void
+    {
+        if (is_callable($action)) {
+            $action();
+            return;
+        }
+
+        if (count($action) !== 2) {
+            throw new RuntimeException(
+                'Invalid controller action definition.'
+            );
+        }
 
         [$controllerClass, $controllerMethod] = $action;
+
+        if (!class_exists($controllerClass)) {
+            throw new RuntimeException(
+                "Controller '{$controllerClass}' does not exist."
+            );
+        }
 
         $controller = new $controllerClass();
 
         if (!method_exists($controller, $controllerMethod)) {
-            throw new \Exception(
-                "Method {$controllerMethod} not found in {$controllerClass}"
+            throw new RuntimeException(
+                "Method '{$controllerMethod}' does not exist in '{$controllerClass}'."
             );
         }
 
@@ -126,14 +144,35 @@ class Router
      */
     private function normalizeUri(string $uri): string
     {
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $path = parse_url($uri, PHP_URL_PATH);
 
-        if ($uri === null || $uri === false) {
+        if ($path === null || $path === false || $path === '') {
             return '/';
         }
 
-        $uri = '/' . trim($uri, '/');
+        $path = '/' . trim($path, '/');
 
-        return $uri === '//' ? '/' : $uri;
+        return $path === '//' ? '/' : $path;
+    }
+
+    /**
+     * Determine whether a route exists.
+     */
+    public function has(string $method, string $uri): bool
+    {
+        $method = strtoupper($method);
+        $uri = $this->normalizeUri($uri);
+
+        return isset($this->routes[$method][$uri]);
+    }
+
+    /**
+     * Return all registered routes.
+     *
+     * @return array<string, array<string, array>>
+     */
+    public function routes(): array
+    {
+        return $this->routes;
     }
 }

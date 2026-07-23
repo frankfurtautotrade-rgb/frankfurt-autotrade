@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
+use App\Database\Database;
+use App\Database\QueryBuilder;
+use BadMethodCallException;
 use PDO;
-use PDOStatement;
 
 abstract class Model
 {
@@ -14,86 +16,182 @@ abstract class Model
      */
     protected PDO $db;
 
+    /**
+     * Database table.
+     */
+    protected string $table = '';
+
+    /**
+     * Primary key.
+     */
+    protected string $primaryKey = 'id';
+
+    /**
+     * Fillable columns.
+     */
+    protected array $fillable = [];
+
+    /**
+     * Constructor.
+     */
     public function __construct()
     {
         $this->db = Database::connection();
     }
 
     /**
-     * Prepare and execute a query.
+     * Create a new query builder instance.
      */
-    protected function query(string $sql, array $params = []): PDOStatement
+    public function query(): QueryBuilder
     {
-        $statement = $this->db->prepare($sql);
-
-        $statement->execute($params);
-
-        return $statement;
+        return new QueryBuilder(
+            $this->db,
+            $this->table
+        );
     }
 
     /**
-     * Fetch a single row.
+     * Get all records.
      */
-    protected function fetch(string $sql, array $params = []): ?array
+    public function all(): Collection
     {
-        $result = $this->query($sql, $params)->fetch();
-
-        return $result === false ? null : $result;
+        return new Collection(
+            $this->query()->get()
+        );
     }
 
     /**
-     * Fetch multiple rows.
+     * Find record by primary key.
      */
-    protected function fetchAll(string $sql, array $params = []): array
+    public function find(int|string $id): ?array
     {
-        return $this->query($sql, $params)->fetchAll();
+        return $this->query()
+            ->where($this->primaryKey, $id)
+            ->first();
     }
 
     /**
-     * Execute an INSERT, UPDATE or DELETE statement.
+     * Create a record.
      */
-    protected function execute(string $sql, array $params = []): bool
+    public function create(array $data): bool
     {
-        return $this->query($sql, $params)->rowCount() > 0;
+        $data = $this->filterFillable($data);
+
+        return $this->query()->insert($data);
     }
 
     /**
-     * Return the last inserted ID.
+     * Update a record.
      */
-    protected function lastInsertId(): int
+    public function update(int|string $id, array $data): bool
     {
-        return (int) $this->db->lastInsertId();
+        $data = $this->filterFillable($data);
+
+        return $this->query()
+            ->where($this->primaryKey, $id)
+            ->update($data);
     }
 
     /**
-     * Begin a transaction.
+     * Delete a record.
      */
-    protected function beginTransaction(): bool
+    public function delete(int|string $id): bool
     {
-        return Database::beginTransaction();
+        return $this->query()
+            ->where($this->primaryKey, $id)
+            ->delete();
     }
 
     /**
-     * Commit a transaction.
+     * Count records.
      */
-    protected function commit(): bool
+    public function count(): int
     {
-        return Database::commit();
+        return $this->query()->count();
     }
 
     /**
-     * Roll back a transaction.
+     * Check whether a record exists.
      */
-    protected function rollBack(): bool
+    public function exists(int|string $id): bool
     {
-        return Database::rollBack();
+        return $this->query()
+            ->where($this->primaryKey, $id)
+            ->exists();
     }
 
     /**
-     * Determine whether a transaction is active.
+     * Get the first matching record.
      */
-    protected function inTransaction(): bool
+    public function first(): ?array
     {
-        return Database::inTransaction();
+        return $this->query()->first();
+    }
+
+    /**
+     * Paginate records.
+     */
+    public function paginate(
+        int $page = 1,
+        int $perPage = 20
+    ): Collection {
+        return new Collection(
+            $this->query()->paginate($page, $perPage)
+        );
+    }
+
+    /**
+     * Filter fillable fields.
+     */
+    protected function filterFillable(array $data): array
+    {
+        if (empty($this->fillable)) {
+            return $data;
+        }
+
+        return array_intersect_key(
+            $data,
+            array_flip($this->fillable)
+        );
+    }
+
+    /**
+     * Get last inserted ID.
+     */
+    public function lastInsertId(): string
+    {
+        return $this->db->lastInsertId();
+    }
+
+    /**
+     * Get table name.
+     */
+    public function getTable(): string
+    {
+        return $this->table;
+    }
+
+    /**
+     * Get primary key.
+     */
+    public function getPrimaryKey(): string
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * Forward unknown calls to QueryBuilder.
+     */
+    public function __call(string $method, array $arguments): mixed
+    {
+        $builder = $this->query();
+
+        if (is_callable([$builder, $method])) {
+            return $builder->$method(...$arguments);
+        }
+
+        throw new BadMethodCallException(
+            "Method {$method} does not exist on " . static::class
+        );
     }
 }

@@ -1,100 +1,128 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use Core\Model;
-use PDO;
+use App\Core\Model;
 
-class Vehicle extends Model
+final class Vehicle extends Model
 {
+    /**
+     * Database table.
+     */
     protected string $table = 'vehicles';
 
     /**
-     * Create a new vehicle.
+     * Primary key.
      */
-    public function create(array $data): bool
+    protected string $primaryKey = 'id';
+
+    /**
+     * Mass assignable fields.
+     */
+    protected array $fillable = [
+        'stock_number',
+        'vin',
+        'brand',
+        'model',
+        'variant',
+        'body_type',
+        'fuel_type',
+        'transmission',
+        'engine_size',
+        'power_hp',
+        'color',
+        'interior_color',
+        'first_registration',
+        'mileage',
+        'price',
+        'vat_type',
+        'location',
+        'description',
+        'status',
+        'featured',
+    ];
+
+    /**
+     * Available vehicles.
+     */
+    public function available(): array
     {
-        $sql = "
-            INSERT INTO vehicles
-            (
-                make,
-                model,
-                year,
-                mileage,
-                price
-            )
-            VALUES
-            (
-                :make,
-                :model,
-                :year,
-                :mileage,
-                :price
-            )
-        ";
-
-        $stmt = $this->db->prepare($sql);
-
-        $success = $stmt->execute([
-            'make'     => trim($data['make'] ?? ''),
-            'model'    => trim($data['model'] ?? ''),
-            'year'     => (int) ($data['year'] ?? 0),
-            'mileage'  => (int) ($data['mileage'] ?? 0),
-            'price'    => (float) ($data['price'] ?? 0),
-        ]);
-
-        if (!$success) {
-            return false;
-        }
-
-        $id = (int) $this->db->lastInsertId();
-
-        $stockNumber = 'FAT-' . str_pad((string) $id, 6, '0', STR_PAD_LEFT);
-
-        $update = $this->db->prepare("
-            UPDATE vehicles
-            SET stock_number = :stock_number
-            WHERE id = :id
-        ");
-
-        $update->execute([
-            'stock_number' => $stockNumber,
-            'id'           => $id,
-        ]);
-
-        return true;
+        return $this->query()
+            ->where('status', 'available')
+            ->orderBy('price')
+            ->get();
     }
 
     /**
-     * Get all vehicles.
+     * Sold vehicles.
      */
-    public function all(): array
+    public function sold(): array
     {
-        $stmt = $this->db->query("
-            SELECT *
-            FROM vehicles
-            ORDER BY id DESC
-        ");
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->query()
+            ->where('status', 'sold')
+            ->orderBy('first_registration', 'DESC')
+            ->get();
     }
 
     /**
-     * Find one vehicle.
+     * Find by VIN.
      */
-    public function find(int $id): array|false
+    public function findByVin(string $vin): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT *
-            FROM vehicles
-            WHERE id = :id
-            LIMIT 1
-        ");
+        return $this->query()
+            ->where('vin', strtoupper(trim($vin)))
+            ->first();
+    }
 
-        $stmt->execute([
-            'id' => $id,
+    /**
+     * Find by stock number.
+     */
+    public function findByStockNumber(string $stockNumber): ?array
+    {
+        return $this->query()
+            ->where('stock_number', strtoupper(trim($stockNumber)))
+            ->first();
+    }
+
+    /**
+     * Mark as sold.
+     */
+    public function markAsSold(int $id): bool
+    {
+        return $this->update($id, [
+            'status' => 'sold',
         ]);
+    }
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+    /**
+     * Mark as available.
+     */
+    public function markAsAvailable(int $id): bool
+    {
+        return $this->update($id, [
+            'status' => 'available',
+        ]);
+    }
+
+    /**
+     * Feature vehicle.
+     */
+    public function feature(int $id): bool
+    {
+        return $this->update($id, [
+            'featured' => 1,
+        ]);
+    }
+
+    /**
+     * Remove featured flag.
+     */
+    public function unfeature(int $id): bool
+    {
+        return $this->update($id, [
+            'featured' => 0,
+        ]);
     }
 }

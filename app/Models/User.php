@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use PDO;
+use App\Core\Model;
 
 final class User extends Model
 {
@@ -22,56 +22,81 @@ final class User extends Model
      * Mass assignable fields.
      */
     protected array $fillable = [
-        'name',
+        'employee_number',
+        'first_name',
+        'last_name',
         'email',
+        'username',
         'password',
         'role',
-        'is_active',
-        'remember_token',
+        'phone',
+        'avatar',
+        'language',
+        'timezone',
         'last_login',
+        'is_active',
     ];
 
     /**
-     * Find a user by email.
+     * Find user by ID.
      */
-    public function findByEmail(string $email): ?array
+    public function findById(int $id): ?array
     {
-        $sql = "
-            SELECT *
-            FROM {$this->table}
-            WHERE email = :email
-            LIMIT 1
-        ";
-
-        $statement = $this->db->prepare($sql);
-
-        $statement->execute([
-            'email' => strtolower(trim($email)),
-        ]);
-
-        $user = $statement->fetch(PDO::FETCH_ASSOC);
-
-        return $user ?: null;
+        return $this->find($id);
     }
 
     /**
-     * Create a new user.
+     * Find user by email.
      */
-    public function createUser(array $data): bool
+    public function findByEmail(string $email): ?array
     {
-        $data['name'] = trim($data['name']);
-        $data['email'] = strtolower(trim($data['email']));
-        $data['password'] = password_hash(
-            $data['password'],
-            PASSWORD_DEFAULT
-        );
+        return $this->query()
+            ->where('email', strtolower(trim($email)))
+            ->first();
+    }
 
-        $data['role'] ??= 'sales';
-        $data['is_active'] ??= 1;
-        $data['remember_token'] ??= null;
-        $data['last_login'] ??= null;
+    /**
+     * Find user by username.
+     */
+    public function findByUsername(string $username): ?array
+    {
+        return $this->query()
+            ->where('username', trim($username))
+            ->first();
+    }
 
-        return $this->create($data);
+    /**
+     * Active users.
+     */
+    public function active(): array
+    {
+        return $this->query()
+            ->where('is_active', 1)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+    }
+
+    /**
+     * Users by role.
+     */
+    public function byRole(string $role): array
+    {
+        return $this->query()
+            ->where('role', $role)
+            ->where('is_active', 1)
+            ->orderBy('last_name')
+            ->get();
+    }
+
+    /**
+     * Update password.
+     */
+    public function updatePassword(int $id, string $password): bool
+    {
+        return $this->update($id, [
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+        ]);
     }
 
     /**
@@ -79,137 +104,52 @@ final class User extends Model
      */
     public function updateLastLogin(int $id): bool
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET last_login = NOW()
-            WHERE {$this->primaryKey} = :id
-        ";
-
-        $statement = $this->db->prepare($sql);
-
-        return $statement->execute([
-            'id' => $id,
+        return $this->update($id, [
+            'last_login' => date('Y-m-d H:i:s'),
         ]);
     }
 
     /**
-     * Return all active users.
-     */
-    public function active(): array
-    {
-        $sql = "
-            SELECT *
-            FROM {$this->table}
-            WHERE is_active = 1
-            ORDER BY name ASC
-        ";
-
-        return $this->db
-            ->query($sql)
-            ->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Activate a user.
+     * Activate user.
      */
     public function activate(int $id): bool
     {
-        return $this->setStatus($id, true);
+        return $this->update($id, [
+            'is_active' => 1,
+        ]);
     }
 
     /**
-     * Deactivate a user.
+     * Deactivate user.
      */
     public function deactivate(int $id): bool
     {
-        return $this->setStatus($id, false);
+        return $this->update($id, [
+            'is_active' => 0,
+        ]);
     }
 
     /**
-     * Change password.
+     * Verify password.
      */
-    public function changePassword(int $id, string $password): bool
+    public function verifyPassword(string $email, string $password): ?array
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET password = :password
-            WHERE {$this->primaryKey} = :id
-        ";
+        $user = $this->findByEmail($email);
 
-        $statement = $this->db->prepare($sql);
+        if (!$user) {
+            return null;
+        }
 
-        return $statement->execute([
-            'id'       => $id,
-            'password' => password_hash(
-                $password,
-                PASSWORD_DEFAULT
-            ),
-        ]);
-    }
+        if (!(bool) $user['is_active']) {
+            return null;
+        }
 
-    /**
-     * Update remember token.
-     */
-    public function updateRememberToken(
-        int $id,
-        ?string $token
-    ): bool {
-        $sql = "
-            UPDATE {$this->table}
-            SET remember_token = :token
-            WHERE {$this->primaryKey} = :id
-        ";
+        if (!password_verify($password, $user['password'])) {
+            return null;
+        }
 
-        $statement = $this->db->prepare($sql);
+        $this->updateLastLogin((int) $user['id']);
 
-        return $statement->execute([
-            'id'    => $id,
-            'token' => $token,
-        ]);
-    }
-
-    /**
-     * Find user by remember token.
-     */
-    public function findByRememberToken(
-        string $token
-    ): ?array {
-        $sql = "
-            SELECT *
-            FROM {$this->table}
-            WHERE remember_token = :token
-            LIMIT 1
-        ";
-
-        $statement = $this->db->prepare($sql);
-
-        $statement->execute([
-            'token' => $token,
-        ]);
-
-        $user = $statement->fetch(PDO::FETCH_ASSOC);
-
-        return $user ?: null;
-    }
-
-    /**
-     * Update active status.
-     */
-    private function setStatus(
-        int $id,
-        bool $active
-    ): bool {
-        $sql = "
-            UPDATE {$this->table}
-            SET is_active = :active
-            WHERE {$this->primaryKey} = :id
-        ";
-
-        $statement = $this->db->prepare($sql);
-
-        return $statement->execute([
-            'id' => $id,
-            'active' => $active ? 1 : 0,
-        ]);
+        return $user;
     }
 }
