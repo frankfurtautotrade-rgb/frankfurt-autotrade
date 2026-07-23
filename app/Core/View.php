@@ -16,11 +16,39 @@ final class View
     private static array $shared = [];
 
     /**
-     * Share data with every view.
+     * Share a variable with every view.
      */
     public static function share(string $key, mixed $value): void
     {
         self::$shared[$key] = $value;
+    }
+
+    /**
+     * Share multiple variables with every view.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function shareMany(array $data): void
+    {
+        self::$shared = array_merge(self::$shared, $data);
+    }
+
+    /**
+     * Return all shared variables.
+     *
+     * @return array<string, mixed>
+     */
+    public static function shared(): array
+    {
+        return self::$shared;
+    }
+
+    /**
+     * Clear all shared variables.
+     */
+    public static function clearShared(): void
+    {
+        self::$shared = [];
     }
 
     /**
@@ -30,6 +58,12 @@ final class View
         string $view,
         array $data = []
     ): void {
+        $view = self::normalizeView($view);
+
+        if ($view === '') {
+            throw new RuntimeException('View name cannot be empty.');
+        }
+
         $file = self::resolvePath($view);
 
         if (!is_file($file)) {
@@ -51,29 +85,48 @@ final class View
      */
     public static function exists(string $view): bool
     {
-        return is_file(self::resolvePath($view));
+        return is_file(
+            self::resolvePath(
+                self::normalizeView($view)
+            )
+        );
     }
 
     /**
-     * Get the full path to a view.
+     * Return the full path to a view.
      */
     public static function path(string $view): string
     {
-        return self::resolvePath($view);
+        return self::resolvePath(
+            self::normalizeView($view)
+        );
+    }
+
+    /**
+     * Normalize a view name.
+     */
+    private static function normalizeView(string $view): string
+    {
+        $view = trim($view);
+
+        $view = str_replace(
+            ['/', '\\'],
+            '.',
+            $view
+        );
+
+        return trim($view, '.');
     }
 
     /**
      * Resolve a view name into a file path.
-     *
-     * Example:
-     * auth.login
-     * becomes
-     * app/Views/auth/login.php
      */
     private static function resolvePath(string $view): string
     {
         return dirname(__DIR__)
-            . '/Views/'
+            . DIRECTORY_SEPARATOR
+            . 'Views'
+            . DIRECTORY_SEPARATOR
             . str_replace('.', DIRECTORY_SEPARATOR, $view)
             . '.php';
     }

@@ -41,6 +41,24 @@ final class Session
     }
 
     /**
+     * Get the current session ID.
+     */
+    public static function id(): string
+    {
+        self::start();
+
+        return session_id();
+    }
+
+    /**
+     * Get the current session name.
+     */
+    public static function name(): string
+    {
+        return session_name();
+    }
+
+    /**
      * Store a value.
      */
     public static function set(string $key, mixed $value): void
@@ -86,6 +104,16 @@ final class Session
     public static function forget(string $key): void
     {
         self::remove($key);
+    }
+
+    /**
+     * Return all session data.
+     */
+    public static function all(): array
+    {
+        self::start();
+
+        return $_SESSION;
     }
 
     /**
@@ -148,16 +176,6 @@ final class Session
     }
 
     /**
-     * Return all session data.
-     */
-    public static function all(): array
-    {
-        self::start();
-
-        return $_SESSION;
-    }
-
-    /**
      * Get and remove a value.
      */
     public static function pull(string $key, mixed $default = null): mixed
@@ -185,6 +203,50 @@ final class Session
     public static function getFlash(string $key, mixed $default = null): mixed
     {
         return self::pull('_flash.' . $key, $default);
+    }
+
+    /**
+     * Append a value to a session array.
+     */
+    public static function push(string $key, mixed $value): void
+    {
+        self::start();
+
+        if (!isset($_SESSION[$key]) || !is_array($_SESSION[$key])) {
+            $_SESSION[$key] = [];
+        }
+
+        $_SESSION[$key][] = $value;
+    }
+
+    /**
+     * Increment a numeric session value.
+     */
+    public static function increment(string $key, int $amount = 1): int
+    {
+        self::start();
+
+        $value = (int) ($_SESSION[$key] ?? 0);
+        $value += $amount;
+
+        $_SESSION[$key] = $value;
+
+        return $value;
+    }
+
+    /**
+     * Decrement a numeric session value.
+     */
+    public static function decrement(string $key, int $amount = 1): int
+    {
+        self::start();
+
+        $value = (int) ($_SESSION[$key] ?? 0);
+        $value -= $amount;
+
+        $_SESSION[$key] = $value;
+
+        return $value;
     }
 
     /**

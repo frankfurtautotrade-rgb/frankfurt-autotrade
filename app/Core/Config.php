@@ -9,7 +9,9 @@ use RuntimeException;
 final class Config
 {
     /**
-     * Cached configuration.
+     * Loaded configuration cache.
+     *
+     * @var array<string, array>
      */
     private static array $config = [];
 
@@ -18,13 +20,44 @@ final class Config
      */
     public static function load(string $file): void
     {
-        $path = APP_PATH . '/../config/' . $file . '.php';
+        $file = trim($file);
 
-        if (!file_exists($path)) {
-            throw new RuntimeException("Configuration file '{$file}' not found.");
+        if ($file === '') {
+            throw new RuntimeException('Configuration file name cannot be empty.');
         }
 
-        self::$config[$file] = require $path;
+        $path = dirname(__DIR__, 2)
+            . DIRECTORY_SEPARATOR
+            . 'config'
+            . DIRECTORY_SEPARATOR
+            . $file
+            . '.php';
+
+        if (!is_file($path)) {
+            throw new RuntimeException(
+                "Configuration file '{$file}' not found.\nExpected path: {$path}"
+            );
+        }
+
+        $config = require $path;
+
+        if (!is_array($config)) {
+            throw new RuntimeException(
+                "Configuration file '{$file}' must return an array."
+            );
+        }
+
+        self::$config[$file] = $config;
+    }
+
+    /**
+     * Reload a configuration file.
+     */
+    public static function reload(string $file): void
+    {
+        unset(self::$config[$file]);
+
+        self::load($file);
     }
 
     /**
@@ -36,6 +69,12 @@ final class Config
      */
     public static function get(string $key, mixed $default = null): mixed
     {
+        $key = trim($key);
+
+        if ($key === '') {
+            return $default;
+        }
+
         $segments = explode('.', $key);
 
         $file = array_shift($segments);
@@ -66,13 +105,25 @@ final class Config
     }
 
     /**
+     * Alias of has().
+     */
+    public static function exists(string $key): bool
+    {
+        return self::has($key);
+    }
+
+    /**
      * Set a configuration value at runtime.
      */
     public static function set(string $key, mixed $value): void
     {
-        $segments = explode('.', $key);
+        $segments = explode('.', trim($key));
 
         $file = array_shift($segments);
+
+        if ($file === null || $file === '') {
+            throw new RuntimeException('Configuration key cannot be empty.');
+        }
 
         if (!isset(self::$config[$file])) {
             self::load($file);
@@ -93,9 +144,19 @@ final class Config
 
     /**
      * Return all loaded configuration.
+     *
+     * @return array<string, array>
      */
     public static function all(): array
     {
         return self::$config;
+    }
+
+    /**
+     * Clear the loaded configuration cache.
+     */
+    public static function clear(): void
+    {
+        self::$config = [];
     }
 }

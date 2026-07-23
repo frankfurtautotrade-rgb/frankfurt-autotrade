@@ -9,6 +9,13 @@ use RuntimeException;
 
 final class Response
 {
+    public const HTTP_OK = 200;
+    public const HTTP_NO_CONTENT = 204;
+    public const HTTP_FOUND = 302;
+    public const HTTP_FORBIDDEN = 403;
+    public const HTTP_NOT_FOUND = 404;
+    public const HTTP_SERVER_ERROR = 500;
+
     /**
      * Send an HTTP status code.
      */
@@ -18,15 +25,25 @@ final class Response
     }
 
     /**
+     * Send an HTTP header.
+     */
+    public static function header(string $name, string $value): void
+    {
+        if (!headers_sent()) {
+            header($name . ': ' . $value);
+        }
+    }
+
+    /**
      * Redirect to another URL.
      */
     public static function redirect(
         string $url,
-        int $status = 302
+        int $status = self::HTTP_FOUND
     ): never {
         if (!headers_sent()) {
-            http_response_code($status);
-            header("Location: {$url}");
+            self::status($status);
+            header('Location: ' . $url);
         }
 
         exit;
@@ -46,7 +63,7 @@ final class Response
     public static function view(
         string $view,
         array $data = [],
-        int $status = 200
+        int $status = self::HTTP_OK
     ): never {
         self::status($status);
 
@@ -60,11 +77,11 @@ final class Response
      */
     public static function text(
         string $text,
-        int $status = 200
+        int $status = self::HTTP_OK
     ): never {
         self::status($status);
 
-        header('Content-Type: text/plain; charset=UTF-8');
+        self::header('Content-Type', 'text/plain; charset=UTF-8');
 
         echo $text;
 
@@ -76,11 +93,11 @@ final class Response
      */
     public static function html(
         string $html,
-        int $status = 200
+        int $status = self::HTTP_OK
     ): never {
         self::status($status);
 
-        header('Content-Type: text/html; charset=UTF-8');
+        self::header('Content-Type', 'text/html; charset=UTF-8');
 
         echo $html;
 
@@ -94,11 +111,11 @@ final class Response
      */
     public static function json(
         array $data,
-        int $status = 200
+        int $status = self::HTTP_OK
     ): never {
         self::status($status);
 
-        header('Content-Type: application/json; charset=UTF-8');
+        self::header('Content-Type', 'application/json; charset=UTF-8');
 
         echo json_encode(
             $data,
@@ -111,7 +128,17 @@ final class Response
     }
 
     /**
-     * Force file download.
+     * Return an empty response.
+     */
+    public static function noContent(): never
+    {
+        self::status(self::HTTP_NO_CONTENT);
+
+        exit;
+    }
+
+    /**
+     * Force a file download.
      */
     public static function download(
         string $path,
@@ -123,10 +150,40 @@ final class Response
 
         $filename ??= basename($path);
 
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . filesize($path));
+        $safeFilename = str_replace(
+            ['"', "\r", "\n"],
+            '',
+            $filename
+        );
+
+        self::header('Content-Description', 'File Transfer');
+        self::header('Content-Type', 'application/octet-stream');
+        self::header(
+            'Content-Disposition',
+            'attachment; filename="' . $safeFilename . '"'
+        );
+        self::header('Content-Length', (string) filesize($path));
+
+        readfile($path);
+
+        exit;
+    }
+
+    /**
+     * Display a file in the browser.
+     */
+    public static function file(
+        string $path,
+        ?string $contentType = null
+    ): never {
+        if (!is_file($path)) {
+            throw new RuntimeException("File not found: {$path}");
+        }
+
+        $contentType ??= mime_content_type($path) ?: 'application/octet-stream';
+
+        self::header('Content-Type', $contentType);
+        self::header('Content-Length', (string) filesize($path));
 
         readfile($path);
 
@@ -138,7 +195,7 @@ final class Response
      */
     public static function notFound(): never
     {
-        self::view('errors.404', [], 404);
+        self::view('errors.404', [], self::HTTP_NOT_FOUND);
     }
 
     /**
@@ -146,7 +203,7 @@ final class Response
      */
     public static function forbidden(): never
     {
-        self::view('errors.403', [], 403);
+        self::view('errors.403', [], self::HTTP_FORBIDDEN);
     }
 
     /**
@@ -154,6 +211,6 @@ final class Response
      */
     public static function serverError(): never
     {
-        self::view('errors.500', [], 500);
+        self::view('errors.500', [], self::HTTP_SERVER_ERROR);
     }
 }
