@@ -2,78 +2,67 @@
 
 declare(strict_types=1);
 
-namespace Core;
-
-use RuntimeException;
+namespace App\Core;
 
 final class Csrf
 {
+    /**
+     * Session key.
+     */
     private const SESSION_KEY = '_csrf_token';
 
     /**
-     * Return the current CSRF token.
+     * Generate a new CSRF token.
+     */
+    public static function generate(): string
+    {
+        $token = bin2hex(random_bytes(32));
+
+        Session::set(self::SESSION_KEY, $token);
+
+        return $token;
+    }
+
+    /**
+     * Get the current CSRF token.
      */
     public static function token(): string
     {
-        Session::start();
-
         if (!Session::has(self::SESSION_KEY)) {
-            Session::set(self::SESSION_KEY, bin2hex(random_bytes(32)));
+            return self::generate();
         }
 
         return (string) Session::get(self::SESSION_KEY);
     }
 
     /**
-     * Regenerate the CSRF token.
+     * Validate a submitted CSRF token.
      */
-    public static function regenerate(): void
+    public static function validate(?string $token): bool
     {
-        Session::set(self::SESSION_KEY, bin2hex(random_bytes(32)));
-    }
-
-    /**
-     * Validate the submitted CSRF token.
-     */
-    public static function validate(?string $token = null): bool
-    {
-        Session::start();
-
-        $sessionToken = Session::get(self::SESSION_KEY);
-
-        $token ??= $_POST['_token'] ?? '';
-
-        if (
-            !is_string($sessionToken)
-            || $sessionToken === ''
-            || !is_string($token)
-            || !hash_equals($sessionToken, $token)
-        ) {
+        if ($token === null || $token === '') {
             return false;
         }
 
-        return true;
-    }
+        $sessionToken = Session::get(self::SESSION_KEY);
 
-    /**
-     * Validate or abort with HTTP 419.
-     */
-    public static function verify(?string $token = null): void
-    {
-        if (!self::validate($token)) {
-            http_response_code(419);
-
-            throw new RuntimeException('Invalid CSRF token.');
+        if ($sessionToken === null) {
+            return false;
         }
+
+        return hash_equals(
+            (string) $sessionToken,
+            $token
+        );
     }
 
     /**
-     * Return a hidden HTML input containing the CSRF token.
+     * Regenerate the token.
      */
-    public static function field(): string
+    public static function regenerate(): string
     {
-        return '<input type="hidden" name="_token" value="' .
-            htmlspecialchars(self::token(), ENT_QUOTES, 'UTF-8') .
-            '">';
+        Session::remove(self::SESSION_KEY);
+
+        return self::generate();
     }
 }

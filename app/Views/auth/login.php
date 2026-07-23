@@ -1,95 +1,318 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
 
+declare(strict_types=1);
+
+/**
+ * @var string|null $error
+ * @var string|null $success
+ * @var string|null $email
+ * @var string $csrf
+ */
+
+$error ??= null;
+$success ??= null;
+$email ??= '';
+$csrf ??= '';
+?>
+<!DOCTYPE html>
+<html lang="de">
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <title>Frankfurt AutoTrade Login</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    <style>
+<title>Login | Frankfurt AutoTrade</title>
 
-        body{
-            margin:0;
-            font-family:Arial,Helvetica,sans-serif;
-            background:#f4f4f4;
-        }
+<link rel="preconnect"
+      href="https://fonts.googleapis.com">
 
-        .login{
+<link rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin>
 
-            width:380px;
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet">
 
-            margin:120px auto;
+<style>
 
-            background:#fff;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-            padding:40px;
+body{
 
-            border-radius:10px;
+    font-family:'Montserrat',sans-serif;
 
-            box-shadow:0 5px 20px rgba(0,0,0,.1);
+    background:#F5F6F8;
 
-        }
+    display:flex;
 
-        h1{
+    justify-content:center;
 
-            text-align:center;
+    align-items:center;
 
-            margin-bottom:30px;
+    min-height:100vh;
 
-        }
+}
 
-        input{
+.login-card{
 
-            width:100%;
+    width:420px;
 
-            padding:12px;
+    background:#fff;
 
-            margin-bottom:15px;
+    border-radius:12px;
 
-            box-sizing:border-box;
+    box-shadow:0 15px 40px rgba(0,0,0,.12);
 
-        }
+    padding:45px;
 
-        button{
+}
 
-            width:100%;
+.logo{
 
-            padding:12px;
+    text-align:center;
 
-            cursor:pointer;
+    font-size:30px;
 
-        }
+    font-weight:700;
 
-    </style>
+    color:#C8A85A;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#666;
+
+    margin-bottom:35px;
+
+    font-size:14px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+}
+
+input[type=email],
+input[type=password]{
+
+    width:100%;
+
+    padding:13px 15px;
+
+    border:1px solid #ddd;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    margin-bottom:20px;
+
+    transition:.25s;
+
+}
+
+input:focus{
+
+    outline:none;
+
+    border-color:#C8A85A;
+
+}
+
+.remember{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-bottom:25px;
+
+    font-size:14px;
+
+}
+
+button{
+
+    width:100%;
+
+    padding:14px;
+
+    background:#C8A85A;
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+button:hover{
+
+    background:#b8974d;
+
+}
+
+.alert{
+
+    padding:14px;
+
+    border-radius:8px;
+
+    margin-bottom:20px;
+
+    font-size:14px;
+
+}
+
+.error{
+
+    background:#ffe5e5;
+
+    color:#b00020;
+
+}
+
+.success{
+
+    background:#e7ffe7;
+
+    color:#0b7d0b;
+
+}
+
+.footer{
+
+    text-align:center;
+
+    margin-top:25px;
+
+    color:#777;
+
+    font-size:13px;
+
+}
+
+</style>
 
 </head>
 
 <body>
 
-<div class="login">
+<div class="login-card">
 
-<h1>Dealer Login</h1>
+<div class="logo">
 
-<form method="post">
+Frankfurt AutoTrade
+
+</div>
+
+<div class="subtitle">
+
+Dealer Management System
+
+</div>
+
+<?php if($error): ?>
+
+<div class="alert error">
+
+<?= htmlspecialchars($error) ?>
+
+</div>
+
+<?php endif; ?>
+
+<?php if($success): ?>
+
+<div class="alert success">
+
+<?= htmlspecialchars($success) ?>
+
+</div>
+
+<?php endif; ?>
+
+<form method="post"
+      action="/login">
+
+<input
+type="hidden"
+name="_token"
+value="<?= htmlspecialchars($csrf) ?>">
+
+<label>Email</label>
 
 <input
 type="email"
 name="email"
-placeholder="Email">
+value="<?= htmlspecialchars($email) ?>"
+required>
+
+<label>Password</label>
 
 <input
 type="password"
 name="password"
-placeholder="Password">
+required>
 
-<button>
+<div class="remember">
+
+<input
+type="checkbox"
+id="remember"
+name="remember">
+
+<label for="remember">
+
+Remember Me
+
+</label>
+
+</div>
+
+<button type="submit">
 
 Login
 
 </button>
 
 </form>
+
+<div class="footer">
+
+© <?= date('Y') ?>
+
+Frankfurt AutoTrade
+
+</div>
 
 </div>
 

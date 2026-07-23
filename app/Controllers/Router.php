@@ -9,34 +9,47 @@ class Router
     /**
      * Registered routes.
      *
-     * @var array<string, array<string, callable|array>>
+     * @var array<string, array<string, array>>
      */
     private array $routes = [];
 
     /**
      * Register a GET route.
      */
-    public function get(string $uri, callable|array $action): void
-    {
-        $this->addRoute('GET', $uri, $action);
+    public function get(
+        string $uri,
+        callable|array $action,
+        ?string $middleware = null
+    ): void {
+        $this->addRoute('GET', $uri, $action, $middleware);
     }
 
     /**
      * Register a POST route.
      */
-    public function post(string $uri, callable|array $action): void
-    {
-        $this->addRoute('POST', $uri, $action);
+    public function post(
+        string $uri,
+        callable|array $action,
+        ?string $middleware = null
+    ): void {
+        $this->addRoute('POST', $uri, $action, $middleware);
     }
 
     /**
-     * Register any route.
+     * Register a route.
      */
-    private function addRoute(string $method, string $uri, callable|array $action): void
-    {
+    private function addRoute(
+        string $method,
+        string $uri,
+        callable|array $action,
+        ?string $middleware
+    ): void {
         $uri = $this->normalizeUri($uri);
 
-        $this->routes[$method][$uri] = $action;
+        $this->routes[$method][$uri] = [
+            'action' => $action,
+            'middleware' => $middleware,
+        ];
     }
 
     /**
@@ -51,15 +64,50 @@ class Router
             exit('404 - Page Not Found');
         }
 
-        $action = $this->routes[$method][$uri];
+        $route = $this->routes[$method][$uri];
 
-        // Anonymous function
+        /*
+        |--------------------------------------------------------------------------
+        | Execute middleware
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($route['middleware'])) {
+
+            $middleware = $route['middleware'];
+
+            if (!class_exists($middleware)) {
+                throw new \Exception(
+                    "Middleware {$middleware} does not exist."
+                );
+            }
+
+            if (!method_exists($middleware, 'handle')) {
+                throw new \Exception(
+                    "Middleware {$middleware} must contain handle()."
+                );
+            }
+
+            $middleware::handle();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Execute action
+        |--------------------------------------------------------------------------
+        */
+
+        $action = $route['action'];
+
+        // Closure
+
         if (is_callable($action)) {
             call_user_func($action);
             return;
         }
 
-        // [Controller::class, 'method']
+        // Controller
+
         [$controllerClass, $controllerMethod] = $action;
 
         $controller = new $controllerClass();

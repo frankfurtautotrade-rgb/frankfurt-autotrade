@@ -2,48 +2,67 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 use DateTime;
 
 final class Logger
 {
-    private const LOG_DIRECTORY = STORAGE_PATH . '/logs';
+    /**
+     * Log file path.
+     */
+    private const LOG_FILE = APP_PATH . '/../storage/logs/application.log';
 
-    public static function info(string $message, array $context = []): void
+    /**
+     * Write a log entry.
+     */
+    private static function write(string $level, string $message): void
     {
-        self::write('INFO', $message, $context);
-    }
+        $directory = dirname(self::LOG_FILE);
 
-    public static function warning(string $message, array $context = []): void
-    {
-        self::write('WARNING', $message, $context);
-    }
-
-    public static function error(string $message, array $context = []): void
-    {
-        self::write('ERROR', $message, $context);
-    }
-
-    private static function write(string $level, string $message, array $context): void
-    {
-        if (!is_dir(self::LOG_DIRECTORY)) {
-            mkdir(self::LOG_DIRECTORY, 0755, true);
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
         }
 
-        $file = self::LOG_DIRECTORY . '/' . date('Y-m-d') . '.log';
+        $date = (new DateTime())->format('Y-m-d H:i:s');
 
-        $date = new DateTime();
-
-        $entry = sprintf(
-            "[%s] [%s] %s %s%s",
-            $date->format('Y-m-d H:i:s'),
-            $level,
+        $line = sprintf(
+            "[%s] %s: %s%s",
+            $date,
+            strtoupper($level),
             $message,
-            empty($context) ? '' : json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             PHP_EOL
         );
 
-        file_put_contents($file, $entry, FILE_APPEND | LOCK_EX);
+        file_put_contents(
+            self::LOG_FILE,
+            $line,
+            FILE_APPEND | LOCK_EX
+        );
+    }
+
+    public static function debug(string $message): void
+    {
+        self::write('debug', $message);
+    }
+
+    public static function info(string $message): void
+    {
+        self::write('info', $message);
+    }
+
+    public static function warning(string $message): void
+    {
+        self::write('warning', $message);
+    }
+
+    public static function error(string $message): void
+    {
+        self::write('error', $message);
+    }
+
+    public static function critical(string $message): void
+    {
+        self::write('critical', $message);
     }
 }

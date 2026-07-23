@@ -2,54 +2,73 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 use Throwable;
 
 final class ExceptionHandler
 {
+    /**
+     * Register the global exception handler.
+     */
     public static function register(): void
     {
-        set_exception_handler([self::class, 'handleException']);
-        set_error_handler([self::class, 'handleError']);
+        set_exception_handler([self::class, 'handle']);
+
+        set_error_handler(function (
+            int $severity,
+            string $message,
+            string $file,
+            int $line
+        ) {
+            throw new \ErrorException(
+                $message,
+                0,
+                $severity,
+                $file,
+                $line
+            );
+        });
     }
 
-    public static function handleException(Throwable $exception): void
+    /**
+     * Handle uncaught exceptions.
+     */
+    public static function handle(Throwable $exception): never
     {
-        Logger::error(
+        Logger::error(sprintf(
+            "%s in %s:%d\n%s",
             $exception->getMessage(),
-            [
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-            ]
+            $exception->getFile(),
+            $exception->getLine(),
+            $exception->getTraceAsString()
+        ));
+
+        $debug = filter_var(
+            Environment::get('APP_DEBUG', false),
+            FILTER_VALIDATE_BOOLEAN
         );
 
         http_response_code(500);
 
-        if (APP_ENV === 'local') {
-            echo '<h1>Unhandled Exception</h1>';
-            echo '<pre>';
-            echo htmlspecialchars((string) $exception);
-            echo '</pre>';
-            return;
+        if ($debug) {
+
+            echo "<h1>Unhandled Exception</h1>";
+
+            echo "<pre>";
+
+            echo htmlspecialchars($exception->__toString());
+
+            echo "</pre>";
+
+        } else {
+
+            echo "<h1>500 - Internal Server Error</h1>";
+
+            echo "<p>An unexpected error occurred.</p>";
+
         }
 
-        require APP_PATH . '/Views/errors/500.php';
-    }
-
-    public static function handleError(
-        int $severity,
-        string $message,
-        string $file,
-        int $line
-    ): bool {
-        throw new \ErrorException(
-            $message,
-            0,
-            $severity,
-            $file,
-            $line
-        );
+        exit;
     }
 }

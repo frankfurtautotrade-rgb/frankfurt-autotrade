@@ -34,7 +34,7 @@ final class View
 
         if (!is_file($file)) {
             throw new RuntimeException(
-                "View '{$view}' not found."
+                "View '{$view}' not found.\nExpected path: {$file}"
             );
         }
 
@@ -66,15 +66,15 @@ final class View
      * Resolve a view name into a file path.
      *
      * Example:
-     * home.index
+     * auth.login
      * becomes
-     * app/Views/home/index.php
+     * app/Views/auth/login.php
      */
     private static function resolvePath(string $view): string
     {
-        return APP_PATH
+        return dirname(__DIR__)
             . '/Views/'
-            . str_replace('.', '/', $view)
+            . str_replace('.', DIRECTORY_SEPARATOR, $view)
             . '.php';
     }
 }

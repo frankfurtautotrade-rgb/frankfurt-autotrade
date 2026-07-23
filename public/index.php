@@ -2,27 +2,45 @@
 
 declare(strict_types=1);
 
-session_start();
-
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-use App\Core\Application;
-use App\Controllers\HomeController;
-use App\Controllers\AuthController;
+define('APP_PATH', dirname(__DIR__) . '/app');
 
-$app = new Application();
-
-$router = $app->router();
+use App\Controllers\Router;
+use App\Core\Request;
+use App\Core\Session;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Start Session
 |--------------------------------------------------------------------------
 */
 
-$router->get('/', [HomeController::class, 'index']);
+Session::start();
 
-$router->get('/login', [AuthController::class, 'showLogin']);
-$router->post('/login', [AuthController::class, 'login']);
+/*
+|--------------------------------------------------------------------------
+| Router
+|--------------------------------------------------------------------------
+*/
 
-$app->run();
+$router = new Router();
+
+/*
+|--------------------------------------------------------------------------
+| Load Routes
+|--------------------------------------------------------------------------
+*/
+
+require dirname(__DIR__) . '/routes/web.php';
+
+/*
+|--------------------------------------------------------------------------
+| Dispatch Request
+|--------------------------------------------------------------------------
+*/
+
+$router->dispatch(
+    Request::method(),
+    Request::uri()
+);

@@ -22,14 +22,12 @@ final class User extends Model
      * Mass assignable fields.
      */
     protected array $fillable = [
-        'role_id',
-        'first_name',
-        'last_name',
+        'name',
         'email',
         'password',
-        'phone',
-        'language',
+        'role',
         'is_active',
+        'remember_token',
         'last_login',
     ];
 
@@ -61,22 +59,23 @@ final class User extends Model
      */
     public function createUser(array $data): bool
     {
+        $data['name'] = trim($data['name']);
         $data['email'] = strtolower(trim($data['email']));
-
         $data['password'] = password_hash(
             $data['password'],
             PASSWORD_DEFAULT
         );
 
-        $data['phone'] ??= null;
-        $data['language'] ??= 'de';
-        $data['is_active'] ??= true;
+        $data['role'] ??= 'sales';
+        $data['is_active'] ??= 1;
+        $data['remember_token'] ??= null;
+        $data['last_login'] ??= null;
 
         return $this->create($data);
     }
 
     /**
-     * Update the last login timestamp.
+     * Update last login.
      */
     public function updateLastLogin(int $id): bool
     {
@@ -102,7 +101,7 @@ final class User extends Model
             SELECT *
             FROM {$this->table}
             WHERE is_active = 1
-            ORDER BY first_name, last_name
+            ORDER BY name ASC
         ";
 
         return $this->db
@@ -127,7 +126,7 @@ final class User extends Model
     }
 
     /**
-     * Change a user's password.
+     * Change password.
      */
     public function changePassword(int $id, string $password): bool
     {
@@ -149,10 +148,57 @@ final class User extends Model
     }
 
     /**
-     * Update user status.
+     * Update remember token.
      */
-    private function setStatus(int $id, bool $active): bool
-    {
+    public function updateRememberToken(
+        int $id,
+        ?string $token
+    ): bool {
+        $sql = "
+            UPDATE {$this->table}
+            SET remember_token = :token
+            WHERE {$this->primaryKey} = :id
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        return $statement->execute([
+            'id'    => $id,
+            'token' => $token,
+        ]);
+    }
+
+    /**
+     * Find user by remember token.
+     */
+    public function findByRememberToken(
+        string $token
+    ): ?array {
+        $sql = "
+            SELECT *
+            FROM {$this->table}
+            WHERE remember_token = :token
+            LIMIT 1
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'token' => $token,
+        ]);
+
+        $user = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Update active status.
+     */
+    private function setStatus(
+        int $id,
+        bool $active
+    ): bool {
         $sql = "
             UPDATE {$this->table}
             SET is_active = :active
@@ -162,8 +208,8 @@ final class User extends Model
         $statement = $this->db->prepare($sql);
 
         return $statement->execute([
-            'id'     => $id,
-            'active' => $active,
+            'id' => $id,
+            'active' => $active ? 1 : 0,
         ]);
     }
 }

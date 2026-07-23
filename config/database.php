@@ -1,16 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Core\Environment;
+
 return [
 
-    'host' => '127.0.0.1',
+    'driver' => Environment::get('DB_CONNECTION', 'mysql'),
 
-    'port' => 3306,
+    'host' => Environment::get('DB_HOST', '127.0.0.1'),
 
-    'database' => 'frankfurt_autotrade',
+    'port' => (int) Environment::get('DB_PORT', 3306),
 
-    'username' => 'root',
+    'database' => Environment::get('DB_DATABASE'),
 
-    'password' => '',
+    'username' => Environment::get('DB_USERNAME'),
+
+    'password' => Environment::get('DB_PASSWORD'),
 
     'charset' => 'utf8mb4',
 

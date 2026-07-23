@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core;
+namespace App\Core;
 
 use PDO;
 use PDOException;
@@ -21,20 +21,45 @@ final class Database
     public static function connection(): PDO
     {
         if (self::$connection === null) {
+
+            $driver = Config::get('database.driver', 'mysql');
+            $host = Config::get('database.host', '127.0.0.1');
+            $port = Config::get('database.port', 3306);
+            $database = Config::get('database.database');
+            $username = Config::get('database.username');
+            $password = Config::get('database.password');
+            $charset = Config::get('database.charset', 'utf8mb4');
+
+            $dsn = sprintf(
+                '%s:host=%s;port=%s;dbname=%s;charset=%s',
+                $driver,
+                $host,
+                $port,
+                $database,
+                $charset
+            );
+
             try {
+
                 self::$connection = new PDO(
-                    DB_DSN,
-                    DB_USER,
-                    DB_PASS,
+                    $dsn,
+                    $username,
+                    $password,
                     [
                         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                         PDO::ATTR_EMULATE_PREPARES   => false,
                     ]
                 );
+
             } catch (PDOException $e) {
+
+                Logger::critical(
+                    'Database connection failed: ' . $e->getMessage()
+                );
+
                 throw new RuntimeException(
-                    'Database connection failed.',
+                    'Unable to connect to the database.',
                     0,
                     $e
                 );
@@ -45,7 +70,7 @@ final class Database
     }
 
     /**
-     * Begin a database transaction.
+     * Begin transaction.
      */
     public static function beginTransaction(): bool
     {
@@ -53,7 +78,7 @@ final class Database
     }
 
     /**
-     * Commit the current transaction.
+     * Commit transaction.
      */
     public static function commit(): bool
     {
@@ -61,7 +86,7 @@ final class Database
     }
 
     /**
-     * Roll back the current transaction.
+     * Roll back transaction.
      */
     public static function rollBack(): bool
     {
@@ -69,7 +94,7 @@ final class Database
     }
 
     /**
-     * Determine whether a transaction is active.
+     * Check if inside transaction.
      */
     public static function inTransaction(): bool
     {
@@ -77,40 +102,52 @@ final class Database
     }
 
     /**
-     * Prevent creating instances.
+     * Execute raw SQL.
+     */
+    public static function statement(string $sql): bool
+    {
+        return self::connection()->exec($sql) !== false;
+    }
+
+    /**
+     * Prepare a SQL statement.
+     */
+    public static function prepare(string $sql)
+    {
+        return self::connection()->prepare($sql);
+    }
+
+    /**
+     * Get PDO instance.
+     */
+    public static function pdo(): PDO
+    {
+        return self::connection();
+    }
+
+    /**
+     * Prevent instantiation.
      */
     private function __construct()
     {
     }
 
-    /**
-     * Prevent cloning.
-     */
     private function __clone()
     {
     }
 
-    /**
-     * Prevent unserialization.
-     */
-    public function __wakeup(): void
-    {
-        throw new RuntimeException('Cannot unserialize Database.');
-    }
-
-    /**
-     * Prevent serialization.
-     */
     public function __serialize(): array
     {
-        throw new RuntimeException('Cannot serialize Database.');
+        throw new RuntimeException('Database cannot be serialized.');
     }
 
-    /**
-     * Prevent unserialization (PHP 8.1+).
-     */
     public function __unserialize(array $data): void
     {
-        throw new RuntimeException('Cannot unserialize Database.');
+        throw new RuntimeException('Database cannot be unserialized.');
+    }
+
+    public function __wakeup(): void
+    {
+        throw new RuntimeException('Database cannot be unserialized.');
     }
 }

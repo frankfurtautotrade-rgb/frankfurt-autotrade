@@ -1,91 +1,88 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
-use Core\Auth;
-use Core\Session;
+use App\Core\Auth;
+use App\Core\Csrf;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\Session;
 
-class AuthController
+final class AuthController
 {
     /**
-     * Display login page.
+     * Display the login page.
      */
-    public function showLogin(): void
+    public function showLogin(): never
     {
-        Session::start();
-
-        if (!Session::has('_token')) {
-            Session::set('_token', bin2hex(random_bytes(32)));
+        if (Auth::check()) {
+            Response::redirect('/admin/dashboard');
         }
 
-        $error = null;
-        $email = '';
-
-        require APP_PATH . '/Views/auth/login.php';
+        Response::view('auth.login', [
+            'csrf'    => Csrf::token(),
+            'error'   => Session::getFlash('error'),
+            'success' => Session::getFlash('success'),
+            'email'   => Session::getFlash('old_email'),
+        ]);
     }
 
     /**
-     * Handle login request.
+     * Process the login request.
      */
-    public function login(): void
+    public function login(): never
     {
-        Session::start();
+        if (!Request::isPost()) {
+            Response::redirect('/login');
+        }
 
         // Validate CSRF token
-        $token = $_POST['_token'] ?? '';
-
-        if (
-            !Session::has('_token') ||
-            !hash_equals(Session::get('_token'), $token)
-        ) {
-            http_response_code(419);
-
-            $error = 'Die Sitzung ist abgelaufen. Bitte versuchen Sie es erneut.';
-            $email = '';
-
-            require APP_PATH . '/Views/auth/login.php';
-            return;
+        if (!Csrf::validate(Request::post('_token'))) {
+            Session::flash('error', 'Invalid security token.');
+            Response::redirect('/login');
         }
 
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $email = trim((string) Request::post('email', ''));
+        $password = (string) Request::post('password', '');
+        $remember = Request::has('remember');
 
         if ($email === '' || $password === '') {
+            Session::flash('error', 'Please enter your email address and password.');
+            Session::flash('old_email', $email);
 
-            $error = 'Bitte E-Mail und Passwort eingeben.';
-
-            require APP_PATH . '/Views/auth/login.php';
-            return;
+            Response::redirect('/login');
         }
 
-        if (!Auth::attempt($email, $password)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Session::flash('error', 'Please enter a valid email address.');
+            Session::flash('old_email', $email);
 
-            $error = 'Ungültige E-Mail oder Passwort.';
-
-            require APP_PATH . '/Views/auth/login.php';
-            return;
+            Response::redirect('/login');
         }
 
-        // Prevent session fixation
-        session_regenerate_id(true);
+        if (!Auth::attempt($email, $password, $remember)) {
+            Session::flash('error', 'Invalid email or password.');
+            Session::flash('old_email', $email);
 
-        // Generate a fresh CSRF token after login
-        Session::set('_token', bin2hex(random_bytes(32)));
+            Response::redirect('/login');
+        }
 
-        header('Location: /admin');
-        exit;
+        Session::flash('success', 'Welcome back!');
+
+        Response::redirect('/admin/dashboard');
     }
 
     /**
-     * Logout user.
+     * Log the current user out.
      */
-    public function logout(): void
+    public function logout(): never
     {
-        Session::start();
-
         Auth::logout();
 
-        header('Location: /login');
-        exit;
+        Session::flash('success', 'You have been logged out successfully.');
+
+        Response::redirect('/login');
     }
 }
